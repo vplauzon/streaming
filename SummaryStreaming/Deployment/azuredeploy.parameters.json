@@ -3,7 +3,10 @@
   "contentVersion": "1.0.0.0",
   "parameters": {
     "Namespace prefix": {
-      "value": "vplns"
+      "value": "vplns2"
+    },
+    "Storage Account Name": {
+      "value": "vplstocap2"
     }
   }
 }

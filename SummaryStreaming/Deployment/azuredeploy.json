@@ -7,41 +7,92 @@
       "metadata": {
         "description": "Prefix for Event hubs namespaces"
       }
+    },
+    "Storage Account Name": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the storage where to capture events"
+      }
     }
   },
-  "variables": {},
+  "variables": {
+  },
   "resources": [
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "name": "[parameters('Storage Account Name')]",
+      "apiVersion": "2017-10-01",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [],
+      "sku": {
+        "name": "Standard_LRS"
+      },
+      "tags": {},
+      "kind": "StorageV2"
+    },
     {
       "type": "Microsoft.EventHub/namespaces",
       "apiVersion": "2017-04-01",
       "name": "[concat(parameters('Namespace prefix'), '-primary')]",
       "location": "[resourceGroup().location]",
+      "dependsOn": [
+      ],
       "tags": {},
       "sku": {
         "name": "Standard",
         "tier": "Standard",
-        "capacity": "1"
+        "capacity": 1
       },
       "properties": {
         "isAutoInflateEnabled": false,
-        "maximumThroughputUnits": "0"
+        "maximumThroughputUnits": 0
       },
-      "resources": []
+      "resources": [
+        {
+          "type": "eventhubs",
+          "apiVersion": "2017-04-01",
+          "name": "telemetry",
+          "dependsOn": [
+            "[resourceId('Microsoft.EventHub/namespaces', concat(parameters('Namespace prefix'), '-primary'))]",
+            "[resourceId('Microsoft.Storage/storageAccounts', parameters('Storage Account Name'))]"
+          ],
+          "properties": {
+            "messageRetentionInDays": 1,
+            "partitionCount": 5,
+            "status": "Active",
+            "captureDescription": {
+              "enabled": true,
+              "encoding": "Avro",
+              "intervalInSeconds": 120,
+              "sizeLimitInBytes": 10485760,
+              "destination": {
+                "name": "EventHubArchive.AzureBlockBlob",
+                "properties": {
+                  "storageAccountResourceId": "[resourceId('Microsoft.Storage/storageAccounts', parameters('Storage Account Name'))]",
+                  "blobContainer": "event-capture"
+                }
+              }
+            }
+          },
+          "resources": []
+        }
+      ]
     },
     {
       "type": "Microsoft.EventHub/namespaces",
       "apiVersion": "2017-04-01",
       "name": "[concat(parameters('Namespace prefix'), '-secondary')]",
       "location": "[resourceGroup().location]",
+      "dependsOn": [],
       "tags": {},
       "sku": {
         "name": "Standard",
         "tier": "Standard",
-        "capacity": "1"
+        "capacity": 1
       },
       "properties": {
         "isAutoInflateEnabled": false,
-        "maximumThroughputUnits": "0"
+        "maximumThroughputUnits": 0
       },
       "resources": []
     }
