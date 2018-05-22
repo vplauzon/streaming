@@ -1,8 +1,50 @@
 {
   "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
-  "parameters": {},
+  "parameters": {
+    "Namespace prefix": {
+      "type": "string",
+      "metadata": {
+        "description": "Prefix for Event hubs namespaces"
+      }
+    }
+  },
   "variables": {},
-  "resources": [],
+  "resources": [
+    {
+      "type": "Microsoft.EventHub/namespaces",
+      "apiVersion": "2017-04-01",
+      "name": "[concat(parameters('Namespace prefix'), '-primary')]",
+      "location": "[resourceGroup().location]",
+      "tags": {},
+      "sku": {
+        "name": "Standard",
+        "tier": "Standard",
+        "capacity": "1"
+      },
+      "properties": {
+        "isAutoInflateEnabled": false,
+        "maximumThroughputUnits": "0"
+      },
+      "resources": []
+    },
+    {
+      "type": "Microsoft.EventHub/namespaces",
+      "apiVersion": "2017-04-01",
+      "name": "[concat(parameters('Namespace prefix'), '-secondary')]",
+      "location": "[resourceGroup().location]",
+      "tags": {},
+      "sku": {
+        "name": "Standard",
+        "tier": "Standard",
+        "capacity": "1"
+      },
+      "properties": {
+        "isAutoInflateEnabled": false,
+        "maximumThroughputUnits": "0"
+      },
+      "resources": []
+    }
+  ],
   "outputs": {}
 }
