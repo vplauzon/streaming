@@ -69,7 +69,35 @@
                 "name": "EventHubArchive.AzureBlockBlob",
                 "properties": {
                   "storageAccountResourceId": "[resourceId('Microsoft.Storage/storageAccounts', parameters('Storage Account Name'))]",
-                  "blobContainer": "event-capture"
+                  "blobContainer": "telemetry-capture"
+                }
+              }
+            }
+          },
+          "resources": []
+        },
+        {
+          "type": "eventhubs",
+          "apiVersion": "2017-04-01",
+          "name": "summary",
+          "dependsOn": [
+            "[resourceId('Microsoft.EventHub/namespaces', concat(parameters('Namespace prefix'), '-primary'))]",
+            "[resourceId('Microsoft.Storage/storageAccounts', parameters('Storage Account Name'))]"
+          ],
+          "properties": {
+            "messageRetentionInDays": 1,
+            "partitionCount": 5,
+            "status": "Active",
+            "captureDescription": {
+              "enabled": true,
+              "encoding": "Avro",
+              "intervalInSeconds": 120,
+              "sizeLimitInBytes": 10485760,
+              "destination": {
+                "name": "EventHubArchive.AzureBlockBlob",
+                "properties": {
+                  "storageAccountResourceId": "[resourceId('Microsoft.Storage/storageAccounts', parameters('Storage Account Name'))]",
+                  "blobContainer": "summary-capture"
                 }
               }
             }
