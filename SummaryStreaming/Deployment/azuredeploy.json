@@ -275,7 +275,9 @@
       "name": "update-summary-app",
       "apiVersion": "2016-06-01",
       "location": "[resourceGroup().location]",
-      "dependsOn": [],
+      "dependsOn": [
+        "[variables('Summary Hub Id')]"
+      ],
       "properties": {
         "definition": {
           "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
