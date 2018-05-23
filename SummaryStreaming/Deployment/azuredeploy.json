@@ -265,9 +265,29 @@
           "name": "Transformation",
           "properties": {
             "streamingUnits": 1,
-            "query": "SELECT COUNT(*) AS Count, WidgetId INTO [summary] FROM [primary-telemetry] TIMESTAMP BY CreatedAt GROUP BY WidgetId, TumblingWindow(second, 5)"
+            "query": "SELECT\r\nCOUNT(*) AS Count,\r\nWidgetId INTO [summary]\r\nFROM [primary-telemetry]\r\nTIMESTAMP BY CreatedAt\r\nGROUP BY WidgetId, TumblingWindow(second, 5)"
           }
         }
+      }
+    },
+    {
+      "type": "Microsoft.Logic/workflows",
+      "name": "update-summary-app",
+      "apiVersion": "2016-06-01",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [],
+      "properties": {
+        "definition": {
+          "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+          "contentVersion": "1.0.0.0",
+          "parameters": {
+            "$connections": {
+              "defaultValue": {},
+              "type": "Object"
+            }
+          }
+        },
+        "parameters": {}
       }
     }
   ],
