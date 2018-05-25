@@ -25,14 +25,14 @@
     "SQL Server Name": "[concat('sqlserver-', uniqueString(concat(resourceGroup().id, parameters('Namespace prefix'))))]",
     "SQL DB Name": "summary",
     "SQL Admin Name": "server-admin",
-    "Primary Event Hub Namespace": "[concat(parameters('Namespace prefix'), '-primary')]",
-    "Secondary Event Hub Namespace": "[concat(parameters('Namespace prefix'), '-secondary')]",
-    "Primary Telemetry Hub Id": "[resourceId('Microsoft.EventHub/namespaces/eventhubs', variables('Primary Event Hub Namespace'), 'telemetry')]",
-    "Summary Hub Id": "[resourceId('Microsoft.EventHub/namespaces/eventhubs', variables('Primary Event Hub Namespace'), 'summary')]",
-    "Primary Telemetry Listen Rule Id": "[resourceId('Microsoft.EventHub/namespaces/eventhubs/authorizationRules', variables('Primary Event Hub Namespace'), 'telemetry', 'listenTelemetryRule')]",
-    "Primary Telemetry Send Rule Id": "[resourceId('Microsoft.EventHub/namespaces/eventhubs/authorizationRules', variables('Primary Event Hub Namespace'), 'telemetry', 'sendTelemetryRule')]",
-    "Summary Send Rule Id": "[resourceId('Microsoft.EventHub/namespaces/eventhubs/authorizationRules', variables('Primary Event Hub Namespace'), 'summary', 'sendSummaryRule')]",
-    "Summary Listen Rule Id": "[resourceId('Microsoft.EventHub/namespaces/eventhubs/authorizationRules', variables('Primary Event Hub Namespace'), 'summary', 'listenSummaryRule')]"
+    "Primary Namespace": "[concat(parameters('Namespace prefix'), '-primary')]",
+    "Secondary Namespace": "[concat(parameters('Namespace prefix'), '-secondary')]",
+    "Primary Telemetry Hub Id": "[resourceId('Microsoft.EventHub/namespaces/eventhubs', variables('Primary Namespace'), 'telemetry')]",
+    "Summary Hub Id": "[resourceId('Microsoft.EventHub/namespaces/eventhubs', variables('Primary Namespace'), 'summary')]",
+    "Primary Namespace Listen Rule Id": "[resourceId('Microsoft.EventHub/namespaces/authorizationRules', variables('Primary Namespace'), 'sendNamespaceRule')]",
+    "Primary Namespace Send Rule Id": "[resourceId('Microsoft.EventHub/namespaces/authorizationRules', variables('Primary Namespace'), 'listenNamespaceRule')]",
+    "Primary Telemetry Listen Rule Id": "[resourceId('Microsoft.EventHub/namespaces/eventhubs/authorizationRules', variables('Primary Namespace'), 'telemetry', 'listenTelemetryRule')]",
+    "Summary Send Rule Id": "[resourceId('Microsoft.EventHub/namespaces/eventhubs/authorizationRules', variables('Primary Namespace'), 'summary', 'sendSummaryRule')]"
   },
   "resources": [
     {
@@ -76,7 +76,7 @@
     {
       "type": "Microsoft.EventHub/namespaces",
       "apiVersion": "2017-04-01",
-      "name": "[variables('Primary Event Hub Namespace')]",
+      "name": "[variables('Primary Namespace')]",
       "location": "[resourceGroup().location]",
       "dependsOn": [],
       "tags": {},
@@ -95,7 +95,7 @@
           "apiVersion": "2017-04-01",
           "name": "telemetry",
           "dependsOn": [
-            "[resourceId('Microsoft.EventHub/namespaces', variables('Primary Event Hub Namespace'))]",
+            "[resourceId('Microsoft.EventHub/namespaces', variables('Primary Namespace'))]",
             "[resourceId('Microsoft.Storage/storageAccounts', parameters('Storage Account Name'))]"
           ],
           "properties": {
@@ -129,19 +129,6 @@
                   "Listen"
                 ]
               }
-            },
-            {
-              "type": "authorizationRules",
-              "apiVersion": "2017-04-01",
-              "name": "sendTelemetryRule",
-              "dependsOn": [
-                "[variables('Primary Telemetry Hub Id')]"
-              ],
-              "properties": {
-                "rights": [
-                  "Send"
-                ]
-              }
             }
           ]
         },
@@ -150,7 +137,7 @@
           "apiVersion": "2017-04-01",
           "name": "summary",
           "dependsOn": [
-            "[resourceId('Microsoft.EventHub/namespaces', variables('Primary Event Hub Namespace'))]",
+            "[resourceId('Microsoft.EventHub/namespaces', variables('Primary Namespace'))]",
             "[resourceId('Microsoft.Storage/storageAccounts', parameters('Storage Account Name'))]"
           ],
           "properties": {
@@ -184,28 +171,41 @@
                   "Send"
                 ]
               }
-            },
-            {
-              "type": "authorizationRules",
-              "apiVersion": "2017-04-01",
-              "name": "listenSummaryRule",
-              "dependsOn": [
-                "[variables('Summary Hub Id')]"
-              ],
-              "properties": {
-                "rights": [
-                  "Listen"
-                ]
-              }
             }
           ]
+        },
+        {
+          "type": "authorizationRules",
+          "apiVersion": "2017-04-01",
+          "name": "sendNamespaceRule",
+          "dependsOn": [
+            "[resourceId('Microsoft.EventHub/namespaces', variables('Primary Namespace'))]"
+          ],
+          "properties": {
+            "rights": [
+              "Send"
+            ]
+          }
+        },
+        {
+          "type": "authorizationRules",
+          "apiVersion": "2017-04-01",
+          "name": "listenNamespaceRule",
+          "dependsOn": [
+            "[resourceId('Microsoft.EventHub/namespaces', variables('Primary Namespace'))]"
+          ],
+          "properties": {
+            "rights": [
+              "Listen"
+            ]
+          }
         }
       ]
     },
     {
       "type": "Microsoft.EventHub/namespaces",
       "apiVersion": "2017-04-01",
-      "name": "[variables('Secondary Event Hub Namespace')]",
+      "name": "[variables('Secondary Namespace')]",
       "location": "[resourceGroup().location]",
       "dependsOn": [],
       "tags": {},
@@ -224,7 +224,7 @@
           "apiVersion": "2017-04-01",
           "name": "telemetry",
           "dependsOn": [
-            "[resourceId('Microsoft.EventHub/namespaces', variables('Secondary Event Hub Namespace'))]",
+            "[resourceId('Microsoft.EventHub/namespaces', variables('Secondary Namespace'))]",
             "[resourceId('Microsoft.Storage/storageAccounts', parameters('Storage Account Name'))]"
           ],
           "properties": {
@@ -259,7 +259,7 @@
         "[variables('Primary Telemetry Listen Rule Id')]",
         "[variables('Summary Hub Id')]",
         "[variables('Summary Send Rule Id')]",
-        "[resourceId('Microsoft.EventHub/namespaces/eventhubs', variables('Secondary Event Hub Namespace'), 'telemetry')]"
+        "[resourceId('Microsoft.EventHub/namespaces/eventhubs', variables('Secondary Namespace'), 'telemetry')]"
       ],
       "properties": {
         "sku": {
@@ -279,7 +279,7 @@
               "dataSource": {
                 "type": "Microsoft.ServiceBus/EventHub",
                 "properties": {
-                  "serviceBusNamespace": "[variables('Primary Event Hub Namespace')]",
+                  "serviceBusNamespace": "[variables('Primary Namespace')]",
                   "sharedAccessPolicyName": "listenTelemetryRule",
                   "sharedAccessPolicyKey": "[listKeys(variables('Primary Telemetry Listen Rule Id'), '2017-04-01').primaryKey]",
                   "eventHubName": "telemetry"
@@ -303,7 +303,7 @@
               "dataSource": {
                 "type": "Microsoft.ServiceBus/EventHub",
                 "properties": {
-                  "serviceBusNamespace": "[variables('Primary Event Hub Namespace')]",
+                  "serviceBusNamespace": "[variables('Primary Namespace')]",
                   "sharedAccessPolicyName": "sendSummaryRule",
                   "sharedAccessPolicyKey": "[listKeys(variables('Summary Send Rule Id'), '2017-04-01').primaryKey]",
                   "eventHubName": "summary"
@@ -331,10 +331,10 @@
     {
       "type": "microsoft.web/connections",
       "apiVersion": "2016-06-01",
-      "name": "primarySummaryHubConnection",
+      "name": "primaryNamespaceSendConnection",
       "location": "[resourceGroup().location]",
       "dependsOn": [
-        "[resourceId('Microsoft.EventHub/namespaces/eventhubs', variables('Primary Event Hub Namespace'), 'summary')]"
+        "[variables('Primary Namespace Send Rule Id')]"
       ],
       "properties": {
         "api": {
@@ -342,25 +342,25 @@
         },
         "displayName": "Primary Summary Hub Connection",
         "parameterValues": {
-          "connectionString": "[concat('Endpoint=sb://', variables('Primary Event Hub Namespace'), '.servicebus.windows.net/;SharedAccessKeyName=sendTelemetryRule;SharedAccessKey=', listKeys(variables('Summary Listen Rule Id'), '2017-04-01').primaryKey, ';EntityPath=summary')]"
+          "connectionString": "[concat('Endpoint=sb://', variables('Primary Namespace'), '.servicebus.windows.net/;SharedAccessKeyName=sendNamespaceRule;SharedAccessKey=', listKeys(variables('Primary Namespace Send Rule Id'), '2017-04-01').primaryKey)]"
         }
       }
     },
     {
       "type": "microsoft.web/connections",
       "apiVersion": "2016-06-01",
-      "name": "primaryTelemetryHubConnection",
+      "name": "primaryNamespaceListenConnection",
       "location": "[resourceGroup().location]",
       "dependsOn": [
-        "[resourceId('Microsoft.EventHub/namespaces/eventhubs', variables('Primary Event Hub Namespace'), 'telemetry')]"
+        "[variables('Primary Namespace Listen Rule Id')]"
       ],
       "properties": {
         "api": {
           "id": "[concat(subscription().id, '/providers/Microsoft.Web/locations/', resourceGroup().location, '/managedApis/', 'eventhubs')]"
         },
-        "displayName": "Primary Hub Connection",
+        "displayName": "Primary Summary Hub Connection",
         "parameterValues": {
-          "connectionString": "[concat('Endpoint=sb://', variables('Primary Event Hub Namespace'), '.servicebus.windows.net/;SharedAccessKeyName=listenSummaryRule;SharedAccessKey=', listKeys(variables('Primary Telemetry Send Rule Id'), '2017-04-01').primaryKey, ';EntityPath=telemetry')]"
+          "connectionString": "[concat('Endpoint=sb://', variables('Primary Namespace'), '.servicebus.windows.net/;SharedAccessKeyName=listenNamespaceRule;SharedAccessKey=', listKeys(variables('Primary Namespace Listen Rule Id'), '2017-04-01').primaryKey)]"
         }
       }
     },
@@ -391,8 +391,7 @@
       "apiVersion": "2016-06-01",
       "location": "[resourceGroup().location]",
       "dependsOn": [
-        "[variables('Summary Hub Id')]",
-        "[resourceId('Microsoft.Web/connections', 'primarySummaryHubConnection')]",
+        "[resourceId('Microsoft.Web/connections', 'primaryNamespaceListenConnection')]",
         "[resourceId('Microsoft.Web/connections', 'sqlConnection')]"
       ],
       "properties": {
@@ -451,8 +450,8 @@
             "value": {
               "eventhubs": {
                 "id": "[concat(subscription().id, '/providers/Microsoft.Web/locations/', resourceGroup().location, '/managedApis/', 'eventhubs')]",
-                "connectionId": "[resourceId('Microsoft.Web/connections', 'primarySummaryHubConnection')]",
-                "connectionName": "primarySummaryHubConnection"
+                "connectionId": "[resourceId('Microsoft.Web/connections', 'primaryNamespaceListenConnection')]",
+                "connectionName": "primaryNamespaceListenConnection"
               },
               "sql": {
                 "id": "[concat(subscription().id, '/providers/Microsoft.Web/locations/', resourceGroup().location, '/managedApis/', 'sql')]",
@@ -470,8 +469,7 @@
       "apiVersion": "2016-06-01",
       "location": "[resourceGroup().location]",
       "dependsOn": [
-        "[variables('Summary Hub Id')]",
-        "[resourceId('Microsoft.Web/connections', 'primaryTelemetryHubConnection')]"
+        "[resourceId('Microsoft.Web/connections', 'primaryNamespaceSendConnection')]"
       ],
       "properties": {
         "definition": {
@@ -516,8 +514,8 @@
             "value": {
               "eventhubs": {
                 "id": "[concat(subscription().id, '/providers/Microsoft.Web/locations/', resourceGroup().location, '/managedApis/', 'eventhubs')]",
-                "connectionId": "[resourceId('Microsoft.Web/connections', 'primaryTelemetryHubConnection')]",
-                "connectionName": "primaryTelemetryHubConnection"
+                "connectionId": "[resourceId('Microsoft.Web/connections', 'primaryNamespaceSendConnection')]",
+                "connectionName": "primaryNamespaceSendConnection"
               }
             }
           }
