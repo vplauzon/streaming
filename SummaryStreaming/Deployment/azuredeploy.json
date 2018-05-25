@@ -477,6 +477,21 @@
         "definition": {
           "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
           "actions": {
+            "Until": {
+              "actions": {
+                "Compose": {
+                  "inputs": "@ticks(utcNow())",
+                  "runAfter": {},
+                  "type": "Compose"
+                }
+              },
+              "expression": "@equals(1, 2)",
+              "limit": {
+                "timeout": "PT1M"
+              },
+              "runAfter": {},
+              "type": "Until"
+            }
           },
           "parameters": {
             "$connections": {
@@ -485,6 +500,13 @@
             }
           },
           "triggers": {
+            "Recurrence": {
+              "recurrence": {
+                "frequency": "Month",
+                "interval": 1
+              },
+              "type": "Recurrence"
+            }
           },
           "contentVersion": "1.0.0.0",
           "outputs": {}
