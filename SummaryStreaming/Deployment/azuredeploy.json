@@ -319,6 +319,9 @@
       "apiVersion": "2016-06-01",
       "name": "primaryHubConnection",
       "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[resourceId('Microsoft.EventHub/namespaces/eventhubs', variables('Primary Event Hub Namespace'), 'summary')]"
+      ],
       "properties": {
         "api": {
           "id": "[concat(subscription().id, '/providers/Microsoft.Web/locations/', resourceGroup().location, '/managedApis/', 'eventhubs')]"
@@ -330,18 +333,54 @@
       }
     },
     {
+      "type": "microsoft.web/connections",
+      "apiVersion": "2016-06-01",
+      "name": "sqlConnection",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Sql/servers/databases', variables('SQL Server Name'), variables('SQL DB Name'))]"
+      ],
+      "properties": {
+        "api": {
+          "id": "[concat(subscription().id, '/providers/Microsoft.Web/locations/', resourceGroup().location, '/managedApis/', 'sql')]"
+        },
+        "displayName": "SQL Connection",
+        "parameterValues": {
+          "server": "[variables('SQL Server Name')]",
+          "database": "[variables('SQL DB Name')]",
+          "username": "[variables('SQL Admin Name')]",
+          "password": "[parameters('SQL Admin Password')]"
+        }
+      }
+    },
+    {
       "type": "Microsoft.Logic/workflows",
       "name": "update-summary-app",
       "apiVersion": "2016-06-01",
       "location": "[resourceGroup().location]",
       "dependsOn": [
         "[variables('Summary Hub Id')]",
-        "[resourceId('Microsoft.Web/connections', 'primaryHubConnection')]"
+        "[resourceId('Microsoft.Web/connections', 'primaryHubConnection')]",
+        "[resourceId('Microsoft.Web/connections', 'sqlConnection')]"
       ],
       "properties": {
         "definition": {
           "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
-          "actions": {},
+          "actions": {
+            "Execute_stored_procedure": {
+              "type": "ApiConnection",
+              "inputs": {
+                "host": {
+                  "connection": {
+                    "name": "@parameters('$connections')['sql']['connectionId']"
+                  }
+                },
+                "method": "post",
+                "path": "/datasets/default/procedures/@{encodeURIComponent(encodeURIComponent('mysproc'))}"
+              },
+              "runAfter": {}
+            }
+          },
           "parameters": {
             "$connections": {
               "defaultValue": {},
@@ -382,6 +421,11 @@
                 "id": "[concat(subscription().id, '/providers/Microsoft.Web/locations/', resourceGroup().location, '/managedApis/', 'eventhubs')]",
                 "connectionId": "[resourceId('Microsoft.Web/connections', 'primaryHubConnection')]",
                 "connectionName": "primaryHubConnection"
+              },
+              "sql": {
+                "id": "[concat(subscription().id, '/providers/Microsoft.Web/locations/', resourceGroup().location, '/managedApis/', 'sql')]",
+                "connectionId": "[resourceId('Microsoft.Web/connections', 'sqlConnection')]",
+                "connectionName": "sqlConnection"
               }
             }
           }
