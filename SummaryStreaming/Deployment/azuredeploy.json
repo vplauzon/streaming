@@ -30,6 +30,7 @@
     "Primary Telemetry Hub Id": "[resourceId('Microsoft.EventHub/namespaces/eventhubs', variables('Primary Event Hub Namespace'), 'telemetry')]",
     "Summary Hub Id": "[resourceId('Microsoft.EventHub/namespaces/eventhubs', variables('Primary Event Hub Namespace'), 'summary')]",
     "Primary Telemetry Listen Rule Id": "[resourceId('Microsoft.EventHub/namespaces/eventhubs/authorizationRules', variables('Primary Event Hub Namespace'), 'telemetry', 'listenTelemetryRule')]",
+    "Primary Telemetry Send Rule Id": "[resourceId('Microsoft.EventHub/namespaces/eventhubs/authorizationRules', variables('Primary Event Hub Namespace'), 'telemetry', 'sendTelemetryRule')]",
     "Summary Send Rule Id": "[resourceId('Microsoft.EventHub/namespaces/eventhubs/authorizationRules', variables('Primary Event Hub Namespace'), 'summary', 'sendSummaryRule')]",
     "Summary Listen Rule Id": "[resourceId('Microsoft.EventHub/namespaces/eventhubs/authorizationRules', variables('Primary Event Hub Namespace'), 'summary', 'listenSummaryRule')]"
   },
@@ -126,6 +127,19 @@
               "properties": {
                 "rights": [
                   "Listen"
+                ]
+              }
+            },
+            {
+              "type": "authorizationRules",
+              "apiVersion": "2017-04-01",
+              "name": "sendTelemetryRule",
+              "dependsOn": [
+                "[variables('Primary Telemetry Hub Id')]"
+              ],
+              "properties": {
+                "rights": [
+                  "Send"
                 ]
               }
             }
@@ -317,7 +331,7 @@
     {
       "type": "microsoft.web/connections",
       "apiVersion": "2016-06-01",
-      "name": "primaryHubConnection",
+      "name": "primarySummaryHubConnection",
       "location": "[resourceGroup().location]",
       "dependsOn": [
         "[resourceId('Microsoft.EventHub/namespaces/eventhubs', variables('Primary Event Hub Namespace'), 'summary')]"
@@ -326,9 +340,27 @@
         "api": {
           "id": "[concat(subscription().id, '/providers/Microsoft.Web/locations/', resourceGroup().location, '/managedApis/', 'eventhubs')]"
         },
+        "displayName": "Primary Summary Hub Connection",
+        "parameterValues": {
+          "connectionString": "[concat('Endpoint=sb://', variables('Primary Event Hub Namespace'), '.servicebus.windows.net/;SharedAccessKeyName=sendTelemetryRule;SharedAccessKey=', listKeys(variables('Summary Listen Rule Id'), '2017-04-01').primaryKey, ';EntityPath=summary')]"
+        }
+      }
+    },
+    {
+      "type": "microsoft.web/connections",
+      "apiVersion": "2016-06-01",
+      "name": "primaryTelemetryHubConnection",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[resourceId('Microsoft.EventHub/namespaces/eventhubs', variables('Primary Event Hub Namespace'), 'telemetry')]"
+      ],
+      "properties": {
+        "api": {
+          "id": "[concat(subscription().id, '/providers/Microsoft.Web/locations/', resourceGroup().location, '/managedApis/', 'eventhubs')]"
+        },
         "displayName": "Primary Hub Connection",
         "parameterValues": {
-          "connectionString": "[concat('Endpoint=sb://', variables('Primary Event Hub Namespace'), '.servicebus.windows.net/;SharedAccessKeyName=listenSummaryRule;SharedAccessKey=', listKeys(variables('Summary Listen Rule Id'), '2017-04-01').primaryKey, ';EntityPath=summary')]"
+          "connectionString": "[concat('Endpoint=sb://', variables('Primary Event Hub Namespace'), '.servicebus.windows.net/;SharedAccessKeyName=listenSummaryRule;SharedAccessKey=', listKeys(variables('Primary Telemetry Send Rule Id'), '2017-04-01').primaryKey, ';EntityPath=telemetry')]"
         }
       }
     },
@@ -360,7 +392,7 @@
       "location": "[resourceGroup().location]",
       "dependsOn": [
         "[variables('Summary Hub Id')]",
-        "[resourceId('Microsoft.Web/connections', 'primaryHubConnection')]",
+        "[resourceId('Microsoft.Web/connections', 'primarySummaryHubConnection')]",
         "[resourceId('Microsoft.Web/connections', 'sqlConnection')]"
       ],
       "properties": {
@@ -419,13 +451,51 @@
             "value": {
               "eventhubs": {
                 "id": "[concat(subscription().id, '/providers/Microsoft.Web/locations/', resourceGroup().location, '/managedApis/', 'eventhubs')]",
-                "connectionId": "[resourceId('Microsoft.Web/connections', 'primaryHubConnection')]",
-                "connectionName": "primaryHubConnection"
+                "connectionId": "[resourceId('Microsoft.Web/connections', 'primarySummaryHubConnection')]",
+                "connectionName": "primarySummaryHubConnection"
               },
               "sql": {
                 "id": "[concat(subscription().id, '/providers/Microsoft.Web/locations/', resourceGroup().location, '/managedApis/', 'sql')]",
                 "connectionId": "[resourceId('Microsoft.Web/connections', 'sqlConnection')]",
                 "connectionName": "sqlConnection"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Logic/workflows",
+      "name": "simulate-telemetry-app",
+      "apiVersion": "2016-06-01",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[variables('Summary Hub Id')]",
+        "[resourceId('Microsoft.Web/connections', 'primaryTelemetryHubConnection')]"
+      ],
+      "properties": {
+        "definition": {
+          "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+          "actions": {
+          },
+          "parameters": {
+            "$connections": {
+              "defaultValue": {},
+              "type": "Object"
+            }
+          },
+          "triggers": {
+          },
+          "contentVersion": "1.0.0.0",
+          "outputs": {}
+        },
+        "parameters": {
+          "$connections": {
+            "value": {
+              "eventhubs": {
+                "id": "[concat(subscription().id, '/providers/Microsoft.Web/locations/', resourceGroup().location, '/managedApis/', 'eventhubs')]",
+                "connectionId": "[resourceId('Microsoft.Web/connections', 'primaryTelemetryHubConnection')]",
+                "connectionName": "primaryTelemetryHubConnection"
               }
             }
           }
