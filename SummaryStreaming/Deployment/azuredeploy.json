@@ -13,9 +13,19 @@
       "metadata": {
         "description": "Name of the storage where to capture events"
       }
+    },
+    "SQL Admin Password": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Password of SQL Admin"
+      }
     }
   },
   "variables": {
+    "SQL Server Name": "[concat('sqlserver-', uniqueString(concat(resourceGroup().id, parameters('Namespace prefix'))))]",
+    "SQL DB Name": "summary",
+    "SQL Admin Name": "server-admin",
+    //"SQL Connection String": "[concat('Data Source=tcp:', reference(resourceId('Microsoft.Sql/servers/', variables('SQL Server Name'))).fullyQualifiedDomainName, ',1433;Initial Catalog=', variables('SQL DB Name'), ';User Id=', variables('SQL Admin Name'), '@', variables('SQL Server Name'), ';Password=', parameters('SQL Admin Password'), ';')]",
     "Primary Event Hub Namespace": "[concat(parameters('Namespace prefix'), '-primary')]",
     "Secondary Event Hub Namespace": "[concat(parameters('Namespace prefix'), '-secondary')]",
     "Primary Telemetry Hub Id": "[resourceId('Microsoft.EventHub/namespaces/eventhubs', variables('Primary Event Hub Namespace'), 'telemetry')]",
@@ -35,6 +45,32 @@
       },
       "tags": {},
       "kind": "StorageV2"
+    },
+    {
+      "type": "Microsoft.Sql/servers",
+      "name": "[variables('SQL Server Name')]",
+      "apiVersion": "2015-05-01-preview",
+      "location": "[resourceGroup().location]",
+      "tags": {},
+      "properties": {
+        "administratorLogin": "[variables('SQL Admin Name')]",
+        "administratorLoginPassword": "[parameters('SQL Admin Password')]"
+      },
+      "resources": [
+        {
+          "type": "databases",
+          "name": "[variables('SQL DB Name')]",
+          "apiVersion": "2014-04-01",
+          "location": "[resourceGroup().location]",
+          "tags": {},
+          "dependsOn": [
+            "[resourceId('Microsoft.Sql/servers/', variables('SQL Server Name'))]"
+          ],
+          "properties": {
+            "edition": "Standard"
+          }
+        }
+      ]
     },
     {
       "type": "Microsoft.EventHub/namespaces",
