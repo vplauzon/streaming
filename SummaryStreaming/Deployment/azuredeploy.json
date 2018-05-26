@@ -75,6 +75,10 @@
           "type": "firewallRules",
           "name": "allow-azure-firewall-rule",
           "apiVersion": "2015-05-01-preview",
+          "tags": {},
+          "dependsOn": [
+            "[resourceId('Microsoft.Sql/servers/', variables('SQL Server Name'))]"
+          ],
           "properties": {
             "startIpAddress": "0.0.0.0",
             "endIpAddress": "0.0.0.0"
@@ -298,7 +302,7 @@
                 "type": "Json",
                 "properties": {
                   "encoding": "UTF8",
-                  "format": "lineSeparated"
+                  "format": "Array"
                 }
               }
             }
@@ -407,18 +411,30 @@
         "definition": {
           "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
           "actions": {
+            "Extract-Payload": {
+              "inputs": "@decodeBase64(triggerBody()?['ContentData'])",
+              "runAfter": {},
+              "type": "Compose"
+            },
             "Execute_stored_procedure": {
-              "type": "ApiConnection",
               "inputs": {
+                "body": {
+                  "jsonPayload": "@base64ToString(triggerBody()?['ContentData'])"
+                },
                 "host": {
                   "connection": {
                     "name": "@parameters('$connections')['sql']['connectionId']"
                   }
                 },
                 "method": "post",
-                "path": "/datasets/default/procedures/@{encodeURIComponent(encodeURIComponent('mysproc'))}"
+                "path": "/datasets/default/procedures/@{encodeURIComponent(encodeURIComponent('[dbo].[updateSummaries]'))}"
               },
-              "runAfter": {}
+              "runAfter": {
+                "Extract-Payload": [
+                  "Succeeded"
+                ]
+              },
+              "type": "ApiConnection"
             }
           },
           "parameters": {
@@ -439,7 +455,7 @@
                 "method": "get",
                 "path": "/@{encodeURIComponent('summary')}/events/batch/head",
                 "queries": {
-                  "contentType": "application/octet-stream",
+                  "contentType": "application/json",
                   "consumerGroupName": "$Default",
                   "maximumEventsCount": 50
                 }

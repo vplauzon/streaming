@@ -33,6 +33,7 @@
     <Content Include="Deploy-AzureResourceGroup.ps1">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <None Include="db-sript.sql" />
   </ItemGroup>
   <Target Name="GetReferenceAssemblyPaths" />
 </Project>

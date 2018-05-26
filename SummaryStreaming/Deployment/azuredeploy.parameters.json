@@ -3,10 +3,10 @@
   "contentVersion": "1.0.0.0",
   "parameters": {
     "Namespace prefix": {
-      "value": "vplns7"
+      "value": "vplns8"
     },
     "Storage Account Name": {
-      "value": "vplstocap7"
+      "value": "vplstocap8"
     },
     "SQL Admin Password": {
       "value": "asfklj982754sfCXNdh!@#"
