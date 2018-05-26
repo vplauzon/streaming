@@ -340,7 +340,7 @@
         "api": {
           "id": "[concat(subscription().id, '/providers/Microsoft.Web/locations/', resourceGroup().location, '/managedApis/', 'eventhubs')]"
         },
-        "displayName": "Primary Summary Hub Connection",
+        "displayName": "Primary Namespace Send Connection",
         "parameterValues": {
           "connectionString": "[concat('Endpoint=sb://', variables('Primary Namespace'), '.servicebus.windows.net/;SharedAccessKeyName=sendNamespaceRule;SharedAccessKey=', listKeys(variables('Primary Namespace Send Rule Id'), '2017-04-01').primaryKey)]"
         }
@@ -358,7 +358,7 @@
         "api": {
           "id": "[concat(subscription().id, '/providers/Microsoft.Web/locations/', resourceGroup().location, '/managedApis/', 'eventhubs')]"
         },
-        "displayName": "Primary Summary Hub Connection",
+        "displayName": "Primary Namespace Listen Connection",
         "parameterValues": {
           "connectionString": "[concat('Endpoint=sb://', variables('Primary Namespace'), '.servicebus.windows.net/;SharedAccessKeyName=listenNamespaceRule;SharedAccessKey=', listKeys(variables('Primary Namespace Listen Rule Id'), '2017-04-01').primaryKey)]"
         }
@@ -476,19 +476,41 @@
           "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
           "actions": {
             "Until": {
-              "actions": {
-                "Compose": {
-                  "inputs": "@ticks(utcNow())",
-                  "runAfter": {},
-                  "type": "Compose"
-                }
-              },
+              "type": "Until",
               "expression": "@equals(1, 2)",
               "limit": {
                 "timeout": "PT1M"
               },
-              "runAfter": {},
-              "type": "Until"
+              "actions": {
+                "Generate-Event-Document": {
+                  "type": "Compose",
+                  "inputs": {
+                    "widgetId": "@rand(1, 100)"
+                  },
+                  "runAfter": {}
+                },
+                "Send_event": {
+                  "type": "ApiConnection",
+                  "inputs": {
+                    "host": {
+                      "connection": {
+                        "name": "@parameters('$connections')['eventhubs']['connectionId']"
+                      }
+                    },
+                    "method": "post",
+                    "body": {
+                      "ContentData": "@{base64(outputs('Generate-Event-Document'))}"
+                    },
+                    "path": "/@{encodeURIComponent('summary')}/events"
+                  },
+                  "runAfter": {
+                    "Generate-Event-Document": [
+                      "Succeeded"
+                    ]
+                  }
+                }
+              },
+              "runAfter": {}
             }
           },
           "parameters": {
@@ -498,12 +520,12 @@
             }
           },
           "triggers": {
-            "Recurrence": {
-              "recurrence": {
-                "frequency": "Month",
-                "interval": 1
+            "manual": {
+              "inputs": {
+                "schema": {}
               },
-              "type": "Recurrence"
+              "kind": "Http",
+              "type": "Request"
             }
           },
           "contentVersion": "1.0.0.0",
