@@ -428,7 +428,7 @@
                   }
                 },
                 "method": "get",
-                "path": "//events/batch/head",
+                "path": "/@{encodeURIComponent('summary')}/events/batch/head",
                 "queries": {
                   "contentType": "application/octet-stream",
                   "consumerGroupName": "$Default",
@@ -437,7 +437,7 @@
               },
               "recurrence": {
                 "frequency": "Second",
-                "interval": 5
+                "interval": 15
               },
               "splitOn": "@triggerBody()"
             }
