@@ -70,6 +70,15 @@
           "properties": {
             "edition": "Standard"
           }
+        },
+        {
+          "type": "firewallRules",
+          "name": "allow-azure-firewall-rule",
+          "apiVersion": "2015-05-01-preview",
+          "properties": {
+            "startIpAddress": "0.0.0.0",
+            "endIpAddress": "0.0.0.0"
+          }
         }
       ]
     },
