@@ -555,14 +555,5 @@
       }
     }
   ],
-  "outputs": {
-    "goodValue": {
-      "type": "string",
-      "value": "Endpoint=sb://vplns7-primary.servicebus.windows.net/;SharedAccessKeyName=sendNamespaceRule;SharedAccessKey=wPxRogXNzEtFsv3gV2qHuPfFkNLgr0OoVWaKUXh+yF4="
-    },
-    "computed": {
-      "type": "string",
-      "value": "[concat('Endpoint=sb://', variables('Primary Namespace'), '.servicebus.windows.net/;SharedAccessKeyName=sendNamespaceRule;SharedAccessKey=', listKeys(variables('Primary Namespace Send Rule Id'), '2017-04-01').primaryKey)]"
-    }
-  }
+  "outputs": {}
 }
