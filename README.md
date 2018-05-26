@@ -2,4 +2,4 @@
 
 Different POCs / Demos using streaming technologies
 
-[Summary Stream](SummaryStream)
+[Summary Stream](https://github.com/vplauzon/streaming/tree/master/SummaryStreaming)
