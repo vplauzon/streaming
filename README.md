@@ -2,4 +2,4 @@
 
 Different POCs / Demos using streaming technologies
 
-[Summary Stream](summarystream)
+[Summary Stream](SummaryStream)
