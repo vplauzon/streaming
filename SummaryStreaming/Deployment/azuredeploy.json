@@ -29,8 +29,8 @@
     "Secondary Namespace": "[concat(parameters('Namespace prefix'), '-secondary')]",
     "Primary Telemetry Hub Id": "[resourceId('Microsoft.EventHub/namespaces/eventhubs', variables('Primary Namespace'), 'telemetry')]",
     "Summary Hub Id": "[resourceId('Microsoft.EventHub/namespaces/eventhubs', variables('Primary Namespace'), 'summary')]",
-    "Primary Namespace Listen Rule Id": "[resourceId('Microsoft.EventHub/namespaces/authorizationRules', variables('Primary Namespace'), 'sendNamespaceRule')]",
-    "Primary Namespace Send Rule Id": "[resourceId('Microsoft.EventHub/namespaces/authorizationRules', variables('Primary Namespace'), 'listenNamespaceRule')]",
+    "Primary Namespace Listen Rule Id": "[resourceId('Microsoft.EventHub/namespaces/authorizationRules', variables('Primary Namespace'), 'listenNamespaceRule')]",
+    "Primary Namespace Send Rule Id": "[resourceId('Microsoft.EventHub/namespaces/authorizationRules', variables('Primary Namespace'), 'sendNamespaceRule')]",
     "Primary Telemetry Listen Rule Id": "[resourceId('Microsoft.EventHub/namespaces/eventhubs/authorizationRules', variables('Primary Namespace'), 'telemetry', 'listenTelemetryRule')]",
     "Summary Send Rule Id": "[resourceId('Microsoft.EventHub/namespaces/eventhubs/authorizationRules', variables('Primary Namespace'), 'summary', 'sendSummaryRule')]"
   },
@@ -323,7 +323,7 @@
           "name": "Transformation",
           "properties": {
             "streamingUnits": 1,
-            "query": "SELECT\r\nCOUNT(*) AS Count,\r\nWidgetId INTO [summary]\r\nFROM [primary-telemetry]\r\nTIMESTAMP BY CreatedAt\r\nGROUP BY WidgetId, TumblingWindow(second, 5)"
+            "query": "SELECT\r\nCOUNT(*) AS Count,\r\nwidgetId INTO [summary]\r\nFROM [primary-telemetry]\r\nTIMESTAMP BY createdAt\r\nGROUP BY widgetId, TumblingWindow(second, 30)"
           }
         }
       }
@@ -479,12 +479,13 @@
               "type": "Until",
               "expression": "@equals(1, 2)",
               "limit": {
-                "timeout": "PT1M"
+                "timeout": "PT10S"
               },
               "actions": {
                 "Generate-Event-Document": {
                   "type": "Compose",
                   "inputs": {
+                    "createdAt": "@utcNow()",
                     "widgetId": "@rand(1, 100)"
                   },
                   "runAfter": {}
@@ -501,7 +502,7 @@
                     "body": {
                       "ContentData": "@{base64(outputs('Generate-Event-Document'))}"
                     },
-                    "path": "/@{encodeURIComponent('summary')}/events"
+                    "path": "/@{encodeURIComponent('telemetry')}/events"
                   },
                   "runAfter": {
                     "Generate-Event-Document": [
@@ -545,5 +546,14 @@
       }
     }
   ],
-  "outputs": {}
+  "outputs": {
+    "goodValue": {
+      "type": "string",
+      "value": "Endpoint=sb://vplns7-primary.servicebus.windows.net/;SharedAccessKeyName=sendNamespaceRule;SharedAccessKey=wPxRogXNzEtFsv3gV2qHuPfFkNLgr0OoVWaKUXh+yF4="
+    },
+    "computed": {
+      "type": "string",
+      "value": "[concat('Endpoint=sb://', variables('Primary Namespace'), '.servicebus.windows.net/;SharedAccessKeyName=sendNamespaceRule;SharedAccessKey=', listKeys(variables('Primary Namespace Send Rule Id'), '2017-04-01').primaryKey)]"
+    }
+  }
 }
