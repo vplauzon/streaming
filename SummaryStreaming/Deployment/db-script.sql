@@ -1,6 +1,31 @@
-﻿CREATE PROC dbo.updateSummaries @jsonPayload AS VARCHAR(MAX)
+﻿--DROP PROC dbo.updateSummaries
+--DROP TABLE [dbo].WidgetSummary
+
+CREATE PROC dbo.updateSummaries @jsonPayload AS VARCHAR(MAX)
 AS
 BEGIN
-	SELECT @jsonPayload
-END;
+	MERGE dbo.WidgetSummary AS target
+	USING
+	(
+		SELECT *
+		FROM OPENJSON(@jsonPayload)
+		WITH (
+			WidgetId INT '$.widgetid',
+			WidgetCount INT '$.count'
+		)
+	) AS source
+	ON (target.WidgetId = source.WidgetId)
+	WHEN MATCHED THEN
+		UPDATE SET WidgetCount = source.WidgetCount+target.WidgetCount
+	WHEN NOT MATCHED THEN
+		INSERT (WidgetId, WidgetCount)
+		VALUES (source.WidgetId, source.WidgetCount);
+END
+GO
+
+CREATE TABLE [dbo].WidgetSummary
+(
+	[WidgetId] INT NOT NULL PRIMARY KEY, 
+    [WidgetCount] INT NOT NULL
+)
 GO

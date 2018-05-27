@@ -22,6 +22,9 @@
     }
   },
   "variables": {
+    "Simulation Burst Duration": "PT10M",
+    "Tumbling Window Length in Seconds": 10,
+    "Update Summary Probe in Seconds": 5,
     "SQL Server Name": "[concat('sqlserver-', uniqueString(concat(resourceGroup().id, parameters('Namespace prefix'))))]",
     "SQL DB Name": "summary",
     "SQL Admin Name": "server-admin",
@@ -335,7 +338,7 @@
           "name": "Transformation",
           "properties": {
             "streamingUnits": 1,
-            "query": "SELECT\r\nCOUNT(*) AS Count,\r\nwidgetId INTO [summary]\r\nFROM [primary-telemetry]\r\nTIMESTAMP BY createdAt\r\nGROUP BY widgetId, TumblingWindow(second, 30)"
+            "query": "[concat('SELECT\r\nCOUNT(*) AS Count,\r\nwidgetId INTO [summary]\r\nFROM [primary-telemetry]\r\nTIMESTAMP BY createdAt\r\nGROUP BY widgetId, TumblingWindow(second, ', variables('Tumbling Window Length in Seconds'), ')')]"
           }
         }
       }
@@ -413,7 +416,7 @@
             "Execute_stored_procedure": {
               "inputs": {
                 "body": {
-                  "jsonPayload": "triggerBody()?['ContentData']"
+                  "jsonPayload": "@string(triggerBody()?['ContentData'])"
                 },
                 "host": {
                   "connection": {
@@ -421,7 +424,14 @@
                   }
                 },
                 "method": "post",
-                "path": "/datasets/default/procedures/@{encodeURIComponent(encodeURIComponent('[dbo].[updateSummaries]'))}"
+                "path": "/datasets/default/procedures/@{encodeURIComponent(encodeURIComponent('[dbo].[updateSummaries]'))}",
+                "retryPolicy": {
+                  "count": 50,
+                  "interval": "PT2S",
+                  "maximumInterval": "PT1H",
+                  "minimumInterval": "PT2S",
+                  "type": "exponential"
+                }
               },
               "runAfter": {
               },
@@ -432,6 +442,10 @@
             "$connections": {
               "defaultValue": {},
               "type": "Object"
+            },
+            "probeIntervalInSeconds": {
+              "defaultValue": {},
+              "type": "int"
             }
           },
           "triggers": {
@@ -453,7 +467,7 @@
               },
               "recurrence": {
                 "frequency": "Second",
-                "interval": 15
+                "interval": "@parameters('probeIntervalInSeconds')"
               },
               "splitOn": "@triggerBody()"
             }
@@ -462,6 +476,9 @@
           "outputs": {}
         },
         "parameters": {
+          "probeIntervalInSeconds": {
+            "value": "[variables('Update Summary Probe in Seconds')]"
+          },
           "$connections": {
             "value": {
               "eventhubs": {
@@ -495,7 +512,7 @@
               "type": "Until",
               "expression": "@equals(1, 2)",
               "limit": {
-                "timeout": "PT10S"
+                "timeout": "@parameters('duration')"
               },
               "actions": {
                 "Generate-Event-Document": {
@@ -534,6 +551,10 @@
             "$connections": {
               "defaultValue": {},
               "type": "Object"
+            },
+            "duration": {
+              "defaultValue": {},
+              "type": "string"
             }
           },
           "triggers": {
@@ -557,6 +578,9 @@
                 "connectionName": "primaryNamespaceSendConnection"
               }
             }
+          },
+          "duration": {
+            "value": "[variables('Simulation Burst Duration')]"
           }
         }
       }
