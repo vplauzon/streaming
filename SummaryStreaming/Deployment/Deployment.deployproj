@@ -27,13 +27,13 @@
   <ItemGroup>
     <None Include="azuredeploy.json" />
     <None Include="azuredeploy.parameters.json" />
+    <None Include="db-script.sql" />
     <None Include="Deployment.targets">
       <Visible>False</Visible>
     </None>
     <Content Include="Deploy-AzureResourceGroup.ps1">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <None Include="db-sript.sql" />
   </ItemGroup>
   <Target Name="GetReferenceAssemblyPaths" />
 </Project>
