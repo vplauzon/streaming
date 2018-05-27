@@ -52,6 +52,7 @@
       "name": "[variables('SQL Server Name')]",
       "apiVersion": "2015-05-01-preview",
       "location": "[resourceGroup().location]",
+      "dependsOn": [],
       "tags": {},
       "properties": {
         "administratorLogin": "[variables('SQL Admin Name')]",
@@ -268,9 +269,7 @@
       "name": "summary-job",
       "location": "[resourceGroup().location]",
       "dependsOn": [
-        "[variables('Primary Telemetry Hub Id')]",
         "[variables('Primary Telemetry Listen Rule Id')]",
-        "[variables('Summary Hub Id')]",
         "[variables('Summary Send Rule Id')]",
         "[resourceId('Microsoft.EventHub/namespaces/eventhubs', variables('Secondary Namespace'), 'telemetry')]"
       ],
