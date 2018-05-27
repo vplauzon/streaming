@@ -23,6 +23,7 @@
   },
   "variables": {
     "Simulation Burst Duration": "PT10M",
+    "Simulation Widget Range": 500,
     "Tumbling Window Length in Seconds": 10,
     "Update Summary Probe in Seconds": 5,
     "SQL Server Name": "[concat('sqlserver-', uniqueString(concat(resourceGroup().id, parameters('Namespace prefix'))))]",
@@ -427,9 +428,9 @@
                 "path": "/datasets/default/procedures/@{encodeURIComponent(encodeURIComponent('[dbo].[updateSummaries]'))}",
                 "retryPolicy": {
                   "count": 50,
-                  "interval": "PT2S",
+                  "interval": "PT5S",
                   "maximumInterval": "PT1H",
-                  "minimumInterval": "PT2S",
+                  "minimumInterval": "PT5S",
                   "type": "exponential"
                 }
               },
@@ -515,33 +516,40 @@
                 "timeout": "@parameters('duration')"
               },
               "actions": {
-                "Generate-Event-Document": {
-                  "type": "Compose",
-                  "inputs": {
-                    "createdAt": "@utcNow()",
-                    "widgetId": "@rand(1, 100)"
-                  },
-                  "runAfter": {}
-                },
-                "Send_event": {
-                  "type": "ApiConnection",
-                  "inputs": {
-                    "host": {
-                      "connection": {
-                        "name": "@parameters('$connections')['eventhubs']['connectionId']"
+                "For_each": {
+                  "actions": {
+                    "Generate-Event-Document": {
+                      "type": "Compose",
+                      "inputs": {
+                        "createdAt": "@utcNow()",
+                        "widgetId": "@rand(1, parameters('widgetRange'))"
+                      },
+                      "runAfter": {}
+                    },
+                    "Send_event": {
+                      "type": "ApiConnection",
+                      "inputs": {
+                        "host": {
+                          "connection": {
+                            "name": "@parameters('$connections')['eventhubs']['connectionId']"
+                          }
+                        },
+                        "method": "post",
+                        "body": {
+                          "ContentData": "@{base64(outputs('Generate-Event-Document'))}"
+                        },
+                        "path": "/@{encodeURIComponent('telemetry')}/events"
+                      },
+                      "runAfter": {
+                        "Generate-Event-Document": [
+                          "Succeeded"
+                        ]
                       }
-                    },
-                    "method": "post",
-                    "body": {
-                      "ContentData": "@{base64(outputs('Generate-Event-Document'))}"
-                    },
-                    "path": "/@{encodeURIComponent('telemetry')}/events"
+                    }
                   },
-                  "runAfter": {
-                    "Generate-Event-Document": [
-                      "Succeeded"
-                    ]
-                  }
+                  "foreach": "@range(0,100)",
+                  "runAfter": {},
+                  "type": "Foreach"
                 }
               },
               "runAfter": {}
@@ -555,6 +563,10 @@
             "duration": {
               "defaultValue": {},
               "type": "string"
+            },
+            "widgetRange": {
+              "defaultValue": {},
+              "type": "int"
             }
           },
           "triggers": {
@@ -581,6 +593,9 @@
           },
           "duration": {
             "value": "[variables('Simulation Burst Duration')]"
+          },
+          "widgetRange": {
+            "value": "[variables('Simulation Widget Range')]"
           }
         }
       }
