@@ -325,7 +325,7 @@
                 "type": "Json",
                 "properties": {
                   "encoding": "UTF8",
-                  "format": "lineSeparated"
+                  "format": "Array"
                 }
               }
             }
@@ -410,15 +410,10 @@
         "definition": {
           "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
           "actions": {
-            "Extract-Payload": {
-              "inputs": "@decodeBase64(triggerBody()?['ContentData'])",
-              "runAfter": {},
-              "type": "Compose"
-            },
             "Execute_stored_procedure": {
               "inputs": {
                 "body": {
-                  "jsonPayload": "@base64ToString(triggerBody()?['ContentData'])"
+                  "jsonPayload": "triggerBody()?['ContentData']"
                 },
                 "host": {
                   "connection": {
@@ -429,9 +424,6 @@
                 "path": "/datasets/default/procedures/@{encodeURIComponent(encodeURIComponent('[dbo].[updateSummaries]'))}"
               },
               "runAfter": {
-                "Extract-Payload": [
-                  "Succeeded"
-                ]
               },
               "type": "ApiConnection"
             }
