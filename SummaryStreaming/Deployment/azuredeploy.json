@@ -390,7 +390,7 @@
         },
         "displayName": "SQL Connection",
         "parameterValues": {
-          "server": "[variables('SQL Server Name')]",
+          "server": "[concat(variables('SQL Server Name'), '.database.windows.net')]",
           "database": "[variables('SQL DB Name')]",
           "username": "[variables('SQL Admin Name')]",
           "password": "[parameters('SQL Admin Password')]"
