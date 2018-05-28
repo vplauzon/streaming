@@ -5,7 +5,7 @@ FROM microsoft/mssql-tools
 WORKDIR /work
 
 # Copy the shell script
-ADD run_script.sh /work
+ADD run-script.sh /work
 
 # Define environment variables
 ENV SCRIPT_URL "Missing script URL"
