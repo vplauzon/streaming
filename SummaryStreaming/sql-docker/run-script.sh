@@ -1,6 +1,6 @@
 #!/bin/bash
 
-sqlcmd
+sqlcmd -?
 
 echo "Fetch " + $SCRIPT_URL
 
