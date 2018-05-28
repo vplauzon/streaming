@@ -1,3 +1,5 @@
+#!/bin/bash
+
 echo "Fetch " + $SCRIPT_URL
 
 curl $SCRIPT_URL > script.sql
