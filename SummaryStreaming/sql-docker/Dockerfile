@@ -16,4 +16,4 @@ ENV SQL_USER_NAME "User Name missing"
 ENV SQL_PASSWORD "Password missing"
 
 # Run app.py when the container launches
-CMD ["bash", "run-script.sh"]
+CMD ./run-script.sh
