@@ -1,4 +1,5 @@
 # Use a Microsoft image with Linux MS SQL tools
+# https://hub.docker.com/r/microsoft/mssql-tools/
 FROM microsoft/mssql-tools
 
 # Set the working directory to /work
