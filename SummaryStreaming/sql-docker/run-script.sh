@@ -1,5 +1,5 @@
 #!/bin/bash
-sqlcmd -?
+/opt/mssql-tools/bin/sqlcmd -?
 
 echo "Fetch " + $SCRIPT_URL
 
