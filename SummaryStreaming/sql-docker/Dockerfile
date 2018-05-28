@@ -9,7 +9,7 @@ WORKDIR /work
 ADD run-script.sh /work
 
 # Define environment variables
-#ENV SCRIPT_URL "Missing script URL"
+ENV SCRIPT_URL "Missing script URL"
 ENV SQL_SERVER "Server Name missing"
 ENV SQL_DB "DB Missing"
 ENV SQL_USER_NAME "User Name missing"
