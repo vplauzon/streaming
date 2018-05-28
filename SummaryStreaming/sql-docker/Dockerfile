@@ -1,5 +1,5 @@
 # Use a Microsoft image with Linux MS SQL tools
-FROM microsoft/mssql_tools
+FROM microsoft/mssql-tools
 
 # Set the working directory to /work
 WORKDIR /work
