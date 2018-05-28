@@ -1,6 +1,13 @@
 ﻿--DROP PROC dbo.updateSummaries
 --DROP TABLE [dbo].WidgetSummary
 
+CREATE TABLE [dbo].WidgetSummary
+(
+	[WidgetId] INT NOT NULL PRIMARY KEY, 
+    [WidgetCount] INT NOT NULL
+)
+GO
+
 CREATE PROC dbo.updateSummaries @jsonPayload AS VARCHAR(MAX)
 AS
 BEGIN
@@ -21,11 +28,4 @@ BEGIN
 		INSERT (WidgetId, WidgetCount)
 		VALUES (source.WidgetId, source.WidgetCount);
 END
-GO
-
-CREATE TABLE [dbo].WidgetSummary
-(
-	[WidgetId] INT NOT NULL PRIMARY KEY, 
-    [WidgetCount] INT NOT NULL
-)
 GO
