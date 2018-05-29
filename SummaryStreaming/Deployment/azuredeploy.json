@@ -24,11 +24,13 @@
   "variables": {
     "Simulation Burst Duration": "PT10M",
     "Simulation Widget Range": 500,
-    "Tumbling Window Length in Seconds": 10,
-    "Update Summary Probe in Seconds": 5,
+    "Tumbling Window Length in Seconds": 5,
+    "Update Summary Probe in Seconds": 2,
     "SQL Server Name": "[concat('sqlserver-', uniqueString(concat(resourceGroup().id, parameters('Namespace prefix'))))]",
+    "SQL Server FQDN": "[concat(variables('SQL Server Name'), '.database.windows.net')]",
     "SQL DB Name": "summary",
     "SQL Admin Name": "server-admin",
+    "SQL Script URL": "https://raw.githubusercontent.com/vplauzon/streaming/master/SummaryStreaming/Deployment/db-script.sql",
     "Primary Namespace": "[concat(parameters('Namespace prefix'), '-primary')]",
     "Secondary Namespace": "[concat(parameters('Namespace prefix'), '-secondary')]",
     "Primary Telemetry Hub Id": "[resourceId('Microsoft.EventHub/namespaces/eventhubs', variables('Primary Namespace'), 'telemetry')]",
@@ -90,6 +92,55 @@
           }
         }
       ]
+    },
+    {
+      "type": "Microsoft.ContainerInstance/containerGroups",
+      "apiVersion": "2018-04-01",
+      "name": "container-group",
+      "location": "East US",
+      "dependsOn": [
+        "[resourceId('Microsoft.Sql/servers/databases', variables('SQL Server Name'), variables('SQL DB Name'))]"
+      ],
+      "properties": {
+        "restartPolicy": "Never",
+        "containers": [
+          {
+            "name": "sql-script-runner",
+            "properties": {
+              "image": "vplauzon/sql-script-runner",
+              "environmentVariables": [
+                {
+                  "name": "SCRIPT_URL",
+                  "value": "[variables('SQL Script URL')]"
+                },
+                {
+                  "name": "SQL_SERVER",
+                  "value": "[variables('SQL Server FQDN')]"
+                },
+                {
+                  "name": "SQL_DB",
+                  "value": "[variables('SQL DB Name')]"
+                },
+                {
+                  "name": "SQL_USER_NAME",
+                  "value": "[variables('SQL Admin Name')]"
+                },
+                {
+                  "name": "SQL_PASSWORD",
+                  "value": "[parameters('SQL Admin Password')]"
+                }
+              ],
+              "resources": {
+                "requests": {
+                  "cpu": 1,
+                  "memoryInGb": 0.2
+                }
+              }
+            }
+          }
+        ],
+        "osType": "Linux"
+      }
     },
     {
       "type": "Microsoft.EventHub/namespaces",
@@ -394,7 +445,7 @@
         },
         "displayName": "SQL Connection",
         "parameterValues": {
-          "server": "[concat(variables('SQL Server Name'), '.database.windows.net')]",
+          "server": "[variables('SQL Server FQDN')]",
           "database": "[variables('SQL DB Name')]",
           "username": "[variables('SQL Admin Name')]",
           "password": "[parameters('SQL Admin Password')]"
