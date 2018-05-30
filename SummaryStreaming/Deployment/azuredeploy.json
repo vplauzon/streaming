@@ -34,11 +34,16 @@
     "Primary Namespace": "[concat(parameters('Namespace prefix'), '-primary')]",
     "Secondary Namespace": "[concat(parameters('Namespace prefix'), '-secondary')]",
     "Primary Telemetry Hub Id": "[resourceId('Microsoft.EventHub/namespaces/eventhubs', variables('Primary Namespace'), 'telemetry')]",
+    "Secondary Telemetry Hub Id": "[resourceId('Microsoft.EventHub/namespaces/eventhubs', variables('Secondary Namespace'), 'telemetry')]",
     "Summary Hub Id": "[resourceId('Microsoft.EventHub/namespaces/eventhubs', variables('Primary Namespace'), 'summary')]",
     "Primary Summary Listen Rule Id": "[resourceId('Microsoft.EventHub/namespaces/eventHubs/authorizationRules', variables('Primary Namespace'), 'summary', 'listenNamespaceRule')]",
     "Primary Telemetry Send Rule Id": "[resourceId('Microsoft.EventHub/namespaces/eventHubs/authorizationRules', variables('Primary Namespace'), 'telemetry', 'sendTelemetryRule')]",
+    "Secondary Telemetry Send Rule Id": "[resourceId('Microsoft.EventHub/namespaces/eventHubs/authorizationRules', variables('Secondary Namespace'), 'telemetry', 'sendTelemetryRule')]",
     "Primary Telemetry Listen Rule Id": "[resourceId('Microsoft.EventHub/namespaces/eventhubs/authorizationRules', variables('Primary Namespace'), 'telemetry', 'listenTelemetryRule')]",
-    "Summary Send Rule Id": "[resourceId('Microsoft.EventHub/namespaces/eventhubs/authorizationRules', variables('Primary Namespace'), 'summary', 'sendSummaryRule')]"
+    "Secondary Telemetry Listen Rule Id": "[resourceId('Microsoft.EventHub/namespaces/eventhubs/authorizationRules', variables('Secondary Namespace'), 'telemetry', 'listenTelemetryRule')]",
+    "Summary Send Rule Id": "[resourceId('Microsoft.EventHub/namespaces/eventhubs/authorizationRules', variables('Primary Namespace'), 'summary', 'sendSummaryRule')]",
+    "queryBeforeFrom": "SELECT\r\nCOUNT(*) AS Count,\r\nwidgetId\r\n",
+    "queryAfterFrom": "[concat('\r\nTIMESTAMP BY createdAt\r\nGROUP BY widgetId, TumblingWindow(second, ', variables('Tumbling Window Length in Seconds'), ')')]"
   },
   "resources": [
     {
@@ -314,7 +319,35 @@
               }
             }
           },
-          "resources": []
+          "resources": [
+            {
+              "type": "authorizationRules",
+              "apiVersion": "2017-04-01",
+              "name": "listenTelemetryRule",
+              "dependsOn": [
+                "[variables('Secondary Telemetry Hub Id')]"
+              ],
+              "properties": {
+                "rights": [
+                  "Listen"
+                ]
+              }
+            },
+            {
+              "type": "authorizationRules",
+              "apiVersion": "2017-04-01",
+              "name": "sendTelemetryRule",
+              "dependsOn": [
+                "[variables('Secondary Telemetry Hub Id')]"
+              ],
+              "properties": {
+                "rights": [
+                  "Send"
+                ]
+              }
+            }
+          ]
+
         }
       ]
     },
@@ -360,6 +393,28 @@
                 }
               }
             }
+          },
+          {
+            "name": "secondary-telemetry",
+            "properties": {
+              "type": "stream",
+              "dataSource": {
+                "type": "Microsoft.ServiceBus/EventHub",
+                "properties": {
+                  "serviceBusNamespace": "[variables('Secondary Namespace')]",
+                  "sharedAccessPolicyName": "listenTelemetryRule",
+                  "sharedAccessPolicyKey": "[listKeys(variables('Secondary Telemetry Listen Rule Id'), '2017-04-01').primaryKey]",
+                  "eventHubName": "telemetry"
+                }
+              },
+              "serialization": {
+                "type": "Json",
+                "properties": {
+                  "encoding": "UTF8",
+                  "format": "Array"
+                }
+              }
+            }
           }
         ],
         "outputs": [
@@ -390,7 +445,7 @@
           "name": "Transformation",
           "properties": {
             "streamingUnits": 1,
-            "query": "[concat('SELECT\r\nCOUNT(*) AS Count,\r\nwidgetId INTO [summary]\r\nFROM [primary-telemetry]\r\nTIMESTAMP BY createdAt\r\nGROUP BY widgetId, TumblingWindow(second, ', variables('Tumbling Window Length in Seconds'), ')')]"
+            "query": "[concat(variables('queryBeforeFrom'), 'FROM [primary-telemetry]', variables('queryAfterFrom'), '\r\nUNION\r\n', variables('queryBeforeFrom'),'FROM [secondary-telemetry]', variables('queryAfterFrom'))]"
           }
         }
       }
@@ -652,5 +707,14 @@
       }
     }
   ],
-  "outputs": {}
+  "outputs": {
+    "Primary Telemetry Send Connection String": {
+      "type": "string",
+      "value": "[concat('Endpoint=sb://', variables('Primary Namespace'), '.servicebus.windows.net/;SharedAccessKeyName=sendTelemetryRule;SharedAccessKey=', listKeys(variables('Primary Telemetry Send Rule Id'), '2017-04-01').primaryKey, ';EntityPath=telemetry')]"
+    },
+    "Secondary Telemetry Send Connection String": {
+      "type": "string",
+      "value": "[concat('Endpoint=sb://', variables('Secondary Namespace'), '.servicebus.windows.net/;SharedAccessKeyName=sendTelemetryRule;SharedAccessKey=', listKeys(variables('Secondary Telemetry Send Rule Id'), '2017-04-01').primaryKey, ';EntityPath=telemetry')]"
+    }
+  }
 }
