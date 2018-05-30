@@ -763,6 +763,10 @@
     "Secondary Telemetry Send Connection String": {
       "type": "string",
       "value": "[concat('Endpoint=sb://', variables('Secondary Namespace'), '.servicebus.windows.net/;SharedAccessKeyName=sendTelemetryRule;SharedAccessKey=', listKeys(variables('Secondary Telemetry Send Rule Id'), '2017-04-01').primaryKey, ';EntityPath=telemetry')]"
+    },
+    "SQL Summary Connection String": {
+      "type": "string",
+      "value": "[concat('Server=tcp:', variables('SQL Server FQDN'), ',1433;Initial Catalog=', variables('SQL DB Name'), ';Persist Security Info=False;User ID=', variables('SQL Admin Name'), ';Password=', parameters('SQL Admin Password'), ';MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;')]"
     }
   }
 }
