@@ -22,7 +22,7 @@
     }
   },
   "variables": {
-    "Simulation Burst Duration": "PT10M",
+    "Simulation Burst Count": 10000,
     "Simulation Widget Range": 500,
     "Tumbling Window Length in Seconds": 5,
     "Update Summary Probe in Seconds": 2,
@@ -347,7 +347,6 @@
               }
             }
           ]
-
         }
       ]
     },
@@ -471,6 +470,24 @@
     {
       "type": "microsoft.web/connections",
       "apiVersion": "2016-06-01",
+      "name": "secondaryNamespaceSendConnection",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[variables('Secondary Telemetry Send Rule Id')]"
+      ],
+      "properties": {
+        "api": {
+          "id": "[concat(subscription().id, '/providers/Microsoft.Web/locations/', resourceGroup().location, '/managedApis/', 'eventhubs')]"
+        },
+        "displayName": "Secondary Namespace Send Connection",
+        "parameterValues": {
+          "connectionString": "[concat('Endpoint=sb://', variables('Secondary Namespace'), '.servicebus.windows.net/;SharedAccessKeyName=sendTelemetryRule;SharedAccessKey=', listKeys(variables('Secondary Telemetry Send Rule Id'), '2017-04-01').primaryKey)]"
+        }
+      }
+    },
+    {
+      "type": "microsoft.web/connections",
+      "apiVersion": "2016-06-01",
       "name": "primaryNamespaceListenConnection",
       "location": "[resourceGroup().location]",
       "dependsOn": [
@@ -540,8 +557,7 @@
                   "type": "exponential"
                 }
               },
-              "runAfter": {
-              },
+              "runAfter": {},
               "type": "ApiConnection"
             }
           },
@@ -609,35 +625,44 @@
       "apiVersion": "2016-06-01",
       "location": "[resourceGroup().location]",
       "dependsOn": [
-        "[resourceId('Microsoft.Web/connections', 'primaryNamespaceSendConnection')]"
+        "[resourceId('Microsoft.Web/connections', 'primaryNamespaceSendConnection')]",
+        "[resourceId('Microsoft.Web/connections', 'secondaryNamespaceSendConnection')]"
       ],
       "properties": {
         "definition": {
           "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
           "actions": {
-            "Until": {
-              "type": "Until",
-              "expression": "@equals(1, 2)",
-              "limit": {
-                "timeout": "@parameters('duration')"
-              },
+            "For_each": {
+              "type": "Foreach",
+              "foreach": "@range(0, parameters('burstRange'))",
               "actions": {
-                "For_each": {
+                "Generate-Event-Document": {
+                  "type": "Compose",
+                  "inputs": {
+                    "createdAt": "@utcNow()",
+                    "widgetId": "@rand(1, parameters('widgetRange'))"
+                  },
+                  "runAfter": {}
+                },
+                "Switch-Primary-Secondary": {
+                  "type": "If",
+                  "expression": {
+                    "and": [
+                      {
+                        "equals": [
+                          "@mod(items('For_each'), 3)",
+                          0
+                        ]
+                      }
+                    ]
+                  },
                   "actions": {
-                    "Generate-Event-Document": {
-                      "type": "Compose",
-                      "inputs": {
-                        "createdAt": "@utcNow()",
-                        "widgetId": "@rand(1, parameters('widgetRange'))"
-                      },
-                      "runAfter": {}
-                    },
-                    "Send_event": {
+                    "Send_Primary_event": {
                       "type": "ApiConnection",
                       "inputs": {
                         "host": {
                           "connection": {
-                            "name": "@parameters('$connections')['eventhubs']['connectionId']"
+                            "name": "@parameters('$connections')['primary-eventhubs']['connectionId']"
                           }
                         },
                         "method": "post",
@@ -646,16 +671,34 @@
                         },
                         "path": "/@{encodeURIComponent('telemetry')}/events"
                       },
-                      "runAfter": {
-                        "Generate-Event-Document": [
-                          "Succeeded"
-                        ]
-                      }
+                      "runAfter": {}
                     }
                   },
-                  "foreach": "@range(0,100)",
-                  "runAfter": {},
-                  "type": "Foreach"
+                  "runAfter": {
+                    "Generate-Event-Document": [
+                      "Succeeded"
+                    ]
+                  },
+                  "else": {
+                    "actions": {
+                      "Send_Secondary_event": {
+                        "type": "ApiConnection",
+                        "inputs": {
+                          "host": {
+                            "connection": {
+                              "name": "@parameters('$connections')['secondary-eventhubs']['connectionId']"
+                            }
+                          },
+                          "method": "post",
+                          "body": {
+                            "ContentData": "@{base64(outputs('Generate-Event-Document'))}"
+                          },
+                          "path": "/@{encodeURIComponent('telemetry')}/events"
+                        },
+                        "runAfter": {}
+                      }
+                    }
+                  }
                 }
               },
               "runAfter": {}
@@ -666,22 +709,22 @@
               "defaultValue": {},
               "type": "Object"
             },
-            "duration": {
-              "defaultValue": {},
-              "type": "string"
-            },
             "widgetRange": {
+              "defaultValue": {},
+              "type": "int"
+            },
+            "burstRange": {
               "defaultValue": {},
               "type": "int"
             }
           },
           "triggers": {
             "manual": {
+              "type": "Request",
+              "kind": "Http",
               "inputs": {
                 "schema": {}
-              },
-              "kind": "Http",
-              "type": "Request"
+              }
             }
           },
           "contentVersion": "1.0.0.0",
@@ -690,18 +733,23 @@
         "parameters": {
           "$connections": {
             "value": {
-              "eventhubs": {
+              "primary-eventhubs": {
                 "id": "[concat(subscription().id, '/providers/Microsoft.Web/locations/', resourceGroup().location, '/managedApis/', 'eventhubs')]",
                 "connectionId": "[resourceId('Microsoft.Web/connections', 'primaryNamespaceSendConnection')]",
                 "connectionName": "primaryNamespaceSendConnection"
+              },
+              "secondary-eventhubs": {
+                "id": "[concat(subscription().id, '/providers/Microsoft.Web/locations/', resourceGroup().location, '/managedApis/', 'eventhubs')]",
+                "connectionId": "[resourceId('Microsoft.Web/connections', 'secondaryNamespaceSendConnection')]",
+                "connectionName": "secondaryNamespaceSendConnection"
               }
             }
           },
-          "duration": {
-            "value": "[variables('Simulation Burst Duration')]"
-          },
           "widgetRange": {
             "value": "[variables('Simulation Widget Range')]"
+          },
+          "burstRange": {
+            "value": "[variables('Simulation Burst Count')]"
           }
         }
       }
