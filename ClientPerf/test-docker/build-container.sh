@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 #	This file needs to have execution permission obviously:  chmod u+x build-container.sh
 
