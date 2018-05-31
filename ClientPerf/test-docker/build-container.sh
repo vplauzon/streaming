@@ -1,3 +1,7 @@
+#!/bin/sh
+
+#	This file needs to have execution permission obviously:  chmod u+x build-container.sh
+
 #	Build Console App in release mode
 dotnet build ../../ClientPerf/ -c Release
 
