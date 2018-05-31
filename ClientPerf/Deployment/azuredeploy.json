@@ -1,8 +1,68 @@
 {
   "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
-  "parameters": {},
-  "variables": {},
-  "resources": [],
-  "outputs": {}
+  "parameters": {
+  },
+  "variables": {
+    "Event Hub Namespace": "[concat('eh-', uniqueString(concat(resourceGroup().id, 'namespace')))]",
+    "Event Hub Name": "test-hub",
+    "Event Hub Id": "[resourceId('Microsoft.EventHub/namespaces/eventhubs', variables('Event Hub Namespace'), variables('Event Hub Name'))]",
+    "Send Rule Name": "sendRule",
+    "Send Rule Id": "[resourceId('Microsoft.EventHub/namespaces/eventHubs/authorizationRules', variables('Event Hub Namespace'), variables('Event Hub Name'), variables('Send Rule Name'))]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.EventHub/namespaces",
+      "apiVersion": "2017-04-01",
+      "name": "[variables('Event Hub Namespace')]",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [],
+      "tags": {},
+      "sku": {
+        "name": "Standard",
+        "tier": "Standard",
+        "capacity": 1
+      },
+      "properties": {
+        "isAutoInflateEnabled": false,
+        "maximumThroughputUnits": 0
+      },
+      "resources": [
+        {
+          "type": "eventhubs",
+          "apiVersion": "2017-04-01",
+          "name": "[variables('Event Hub Name')]",
+          "dependsOn": [
+            "[resourceId('Microsoft.EventHub/namespaces', variables('Event Hub Namespace'))]"
+          ],
+          "properties": {
+            "messageRetentionInDays": 1,
+            "partitionCount": 5,
+            "status": "Active"
+          },
+          "resources": [
+            {
+              "type": "authorizationRules",
+              "apiVersion": "2017-04-01",
+              "name": "[variables('Send Rule Name')]",
+              "dependsOn": [
+                "[variables('Event Hub Id')]"
+              ],
+              "properties": {
+                "rights": [
+                  "Send"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "outputs": {
+    "Event Hub Send Connection String": {
+      "type": "string",
+      "value": "[concat('Endpoint=sb://', variables('Event Hub Namespace'), '.servicebus.windows.net/;SharedAccessKeyName=', variables('Send Rule Name'), ';SharedAccessKey=', listKeys(variables('Send Rule Id'), '2017-04-01').primaryKey, ';EntityPath=', variables('Event Hub Name'))]"
+    }
+  }
 }
