@@ -1,6 +1,6 @@
 # Summary Streaming
 
-Deploys the solution elaborated in [this article](https://vincentlauzon.com/2018/05/22/taming-the-fire-hose-azure-stream-analytics/).
+Deploys the solution elaborated in [this article](https://vincentlauzon.com/2018/05/22/taming-the-fire-hose-azure-stream-analytics/).  The deployment is explained in [this article](https://vincentlauzon.com/2018/05/31/implementing-automating-azure-stream-analytics-pipeline/).
 
 The solution uses Azure Stream Analytics to summarize a stream of events.
 
