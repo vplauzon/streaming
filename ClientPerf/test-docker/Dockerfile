@@ -8,6 +8,7 @@ WORKDIR /work
 ADD temp/* /work/
 
 # Define environment variables
+ENV CONNECTION_STRING "Missing Connection String"
 ENV SCENARIO "Missing Scenario"
 
 # Run console app
