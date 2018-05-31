@@ -2,7 +2,6 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -21,20 +20,18 @@ namespace ClientConsole
 
         protected static byte[] GetDummyEventBinary()
         {
+            return ASCIIEncoding.ASCII.GetBytes(GetDummyEventString());
+        }
+
+        protected static string GetDummyEventString()
+        {
             var dummyEvent = new
             {
                 Name = "John Smith",
                 CreatedAt = DateTime.UtcNow.ToString("o")
             };
-            var serializer = new JsonSerializer();
-            var stream = new MemoryStream();
-            var streamWriter = new StreamWriter(stream);
-            var jsonWriter = new JsonTextWriter(streamWriter);
 
-            serializer.Serialize(jsonWriter, dummyEvent);
-            streamWriter.Flush();
-
-            return stream.GetBuffer();
+            return JsonConvert.SerializeObject(dummyEvent);
         }
 
         protected async static Task<TimeSpan> TimeFunctionAsync(Func<Task> function)

@@ -1,8 +1,4 @@
-﻿using Microsoft.Azure.EventHubs;
-using Newtonsoft.Json;
-using System;
-using System.Diagnostics;
-using System.IO;
+﻿using System;
 using System.Threading.Tasks;
 
 namespace ClientConsole
@@ -21,6 +17,9 @@ namespace ClientConsole
             {
                 case "ISOLATION":
                     new Isolation(connectionString).RunAsync().Wait();
+                    break;
+                case "HTTP":
+                    new Http(connectionString).RunAsync().Wait();
                     break;
                 default:
                     Console.WriteLine($"Unsupported scenario:  {scenario}");
