@@ -1,4 +1,4 @@
-# Use a Microsoft image with .NET core SDK
+# Use a Microsoft image with .NET core SDK (https://hub.docker.com/r/microsoft/aspnetcore-build/)
 FROM microsoft/aspnetcore-build
 
 # Set the working directory to /work
