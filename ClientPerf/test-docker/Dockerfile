@@ -1,14 +1,14 @@
-# Use a Microsoft image with .NET core runtime only
-FROM microsoft/aspnetcore
+# Use a Microsoft image with .NET core SDK
+FROM microsoft/aspnetcore-build
 
 # Set the working directory to /work
 WORKDIR /work
 
 # Copy DLL
-ADD ClientConsole.dll /work
+ADD temp/* /work/
 
 # Define environment variables
 ENV SCENARIO "Missing Scenario"
 
 # Run console app
-CMD ["dotnet", "ClientConsole.dll"]
+CMD ["dotnet", "run", "ClientConsole"]
