@@ -2,20 +2,40 @@
   "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
+    "Location": {
+      "defaultValue": "eastus",
+      "type": "string",
+      "allowedValues": [
+        "westus",
+        "eastus",
+        "westeurope",
+        "westus2",
+        "northeurope",
+        "southeastasia"
+      ],
+      "metadata": {
+        "description": "Location of resources:  Container Instance isn't available everywhere"
+      }
+    }
   },
   "variables": {
     "Event Hub Namespace": "[concat('eh-', uniqueString(concat(resourceGroup().id, 'namespace')))]",
     "Event Hub Name": "test-hub",
     "Event Hub Id": "[resourceId('Microsoft.EventHub/namespaces/eventhubs', variables('Event Hub Namespace'), variables('Event Hub Name'))]",
     "Send Rule Name": "sendRule",
-    "Send Rule Id": "[resourceId('Microsoft.EventHub/namespaces/eventHubs/authorizationRules', variables('Event Hub Namespace'), variables('Event Hub Name'), variables('Send Rule Name'))]"
+    "Send Rule Id": "[resourceId('Microsoft.EventHub/namespaces/eventHubs/authorizationRules', variables('Event Hub Namespace'), variables('Event Hub Name'), variables('Send Rule Name'))]",
+    "containers": [
+      {
+        "scenario": "isolation"
+      }
+    ]
   },
   "resources": [
     {
       "type": "Microsoft.EventHub/namespaces",
       "apiVersion": "2017-04-01",
       "name": "[variables('Event Hub Namespace')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('Location')]",
       "dependsOn": [],
       "tags": {},
       "sku": {
@@ -57,6 +77,47 @@
           ]
         }
       ]
+    },
+    {
+      "type": "Microsoft.ContainerInstance/containerGroups",
+      "apiVersion": "2018-04-01",
+      "copy": {
+        "name": "Container-group-copy",
+        "count": "[length(variables('containers'))]"
+      },
+      "name": "[concat(variables('containers')[copyIndex()].scenario, '-group')]",
+      "location": "[parameters('Location')]",
+      "dependsOn": [
+        "[variables('Send Rule Id')]"
+      ],
+      "properties": {
+        "restartPolicy": "Never",
+        "containers": [
+          {
+            "name": "[variables('containers')[copyIndex()].scenario]",
+            "properties": {
+              "image": "vplauzon/client-perf-event-hub",
+              "environmentVariables": [
+                {
+                  "name": "CONNECTION_STRING",
+                  "value": "[concat('Endpoint=sb://', variables('Event Hub Namespace'), '.servicebus.windows.net/;SharedAccessKeyName=', variables('Send Rule Name'), ';SharedAccessKey=', listKeys(variables('Send Rule Id'), '2017-04-01').primaryKey, ';EntityPath=', variables('Event Hub Name'))]"
+                },
+                {
+                  "name": "SCENARIO",
+                  "value": "[variables('containers')[copyIndex()].scenario]"
+                }
+              ],
+              "resources": {
+                "requests": {
+                  "cpu": 1,
+                  "memoryInGb": 0.2
+                }
+              }
+            }
+          }
+        ],
+        "osType": "Linux"
+      }
     }
   ],
   "outputs": {
