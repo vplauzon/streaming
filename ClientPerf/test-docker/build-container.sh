@@ -1,6 +1,3 @@
-#	Build Console App in release mode
-dotnet build ../../ClientPerf/ -c Release
-
 #	Remove temp directory
 rm temp -r
 
@@ -15,3 +12,6 @@ sudo docker build -t vplauzon/client-perf-event-hub .
 
 #	Publish image
 sudo docker push vplauzon/client-perf-event-hub
+
+#	Test image
+#sudo docker run -it vplauzon/client-perf-event-hub

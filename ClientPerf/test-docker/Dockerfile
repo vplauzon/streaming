@@ -11,4 +11,4 @@ ADD temp/* /work/
 ENV SCENARIO "Missing Scenario"
 
 # Run console app
-CMD ["dotnet", "run", "ClientConsole"]
+CMD ["dotnet", "run", "-c", "Release", "ClientConsole"]
