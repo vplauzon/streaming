@@ -1,15 +1,14 @@
-# Use a Microsoft image with Linux MS SQL tools
-# https://hub.docker.com/r/microsoft/mssql-tools/
-FROM mcr.microsoft.com/mssql-tools
+# Use a Microsoft image with .NET core runtime only
+FROM microsoft/aspnetcore
 
 # Set the working directory to /work
 WORKDIR /work
 
-# Copy the shell script
-#ADD run-script.sh /work
+# Copy DLL
+ADD ../ClientConsole/bin/Release/netcoreapp2.0/ClientConsole.dll /work
 
 # Define environment variables
-#ENV SCRIPT_URL "Missing script URL"
+ENV SCENARIO "Missing Scenario"
 
-# Run app.py when the container launches
-#CMD ["bash", "run-script.sh"]
+# Run console app
+CMD ["dotnet", "ClientConsole.dll"]
