@@ -5,7 +5,7 @@ FROM microsoft/aspnetcore
 WORKDIR /work
 
 # Copy DLL
-ADD ../ClientConsole/bin/Release/netcoreapp2.0/ClientConsole.dll /work
+ADD ClientConsole.dll /work
 
 # Define environment variables
 ENV SCENARIO "Missing Scenario"
