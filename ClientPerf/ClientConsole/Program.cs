@@ -15,7 +15,7 @@ namespace ClientConsole
             Console.WriteLine($"Connection String:  {connectionString}");
             Console.WriteLine($"Scenario:  {scenario}");
 
-            switch(scenario.ToLower())
+            switch (scenario.ToLower())
             {
                 case "isolated-perf":
                     new IsolatedPerfScenario(connectionString, isAmqp).RunAsync().Wait();
@@ -30,6 +30,11 @@ namespace ClientConsole
                     Console.WriteLine($"Unsupported scenario:  {scenario}");
                     break;
             }
+
+            var totalEvents = AmqpEventHubClient.GetTotalEventCountAsync(connectionString).Result;
+
+            Console.WriteLine();
+            Console.WriteLine($"Total number of events:  {totalEvents}");
         }
     }
 }

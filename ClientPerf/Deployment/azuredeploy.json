@@ -32,6 +32,22 @@
       {
         "protocol": "http",
         "scenario": "isolated-perf"
+      },
+      {
+        "protocol": "amqp",
+        "scenario": "batch-one-by-one-perf"
+      },
+      {
+        "protocol": "http",
+        "scenario": "batch-one-by-one-perf"
+      },
+      {
+        "protocol": "amqp",
+        "scenario": "batch-perf"
+      },
+      {
+        "protocol": "http",
+        "scenario": "batch-perf"
       }
     ]
   },

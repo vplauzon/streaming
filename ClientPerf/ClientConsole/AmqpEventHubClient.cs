@@ -22,6 +22,24 @@ namespace ClientConsole
             return new AmqpEventHubClient(EventHubClient.CreateFromConnectionString(connectionString));
         }
 
+        public static async Task<long> GetTotalEventCountAsync(string connectionString)
+        {
+            var client = EventHubClient.CreateFromConnectionString(connectionString);
+            var info = await client.GetRuntimeInformationAsync();
+            var partitionInfoTasks = from id in info.PartitionIds
+                                     select client.GetPartitionRuntimeInformationAsync(id);
+
+            await Task.WhenAll(partitionInfoTasks);
+
+            var partitionInfo = from t in partitionInfoTasks
+                                select t.Result;
+            var lengths = from p in partitionInfo
+                          select p.LastEnqueuedSequenceNumber - p.BeginSequenceNumber;
+            var total = lengths.Sum();
+
+            return total;
+        }
+
         async Task IEventHubClient.SendAsync(object jsonPayload)
         {
             var text = JsonConvert.SerializeObject(jsonPayload);
