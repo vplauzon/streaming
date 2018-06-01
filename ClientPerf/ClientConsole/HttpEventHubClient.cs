@@ -48,6 +48,11 @@ namespace ClientConsole
             var responseText = await response.Content.ReadAsStringAsync();
         }
 
+        async Task IEventHubClient.SendBatchAsync(IEnumerable<object> batch)
+        {
+            throw new NotImplementedException();
+        }
+
         Task IEventHubClient.CloseAsync()
         {
             _client.Dispose();

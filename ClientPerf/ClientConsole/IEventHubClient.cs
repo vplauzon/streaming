@@ -9,6 +9,8 @@ namespace ClientConsole
     {
         Task SendAsync(object jsonPayload);
 
+        Task SendBatchAsync(IEnumerable<object> batch);
+
         Task CloseAsync();
     }
 }

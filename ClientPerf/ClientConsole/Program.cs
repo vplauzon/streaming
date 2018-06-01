@@ -20,6 +20,12 @@ namespace ClientConsole
                 case "isolated-perf":
                     new IsolatedPerfScenario(connectionString, isAmqp).RunAsync().Wait();
                     break;
+                case "batch-one-by-one-perf":
+                    new BatchOneByOnePerfScenario(connectionString, isAmqp).RunAsync().Wait();
+                    break;
+                case "batch-perf":
+                    new BatchPerfScenario(connectionString, isAmqp).RunAsync().Wait();
+                    break;
                 default:
                     Console.WriteLine($"Unsupported scenario:  {scenario}");
                     break;

@@ -32,6 +32,13 @@ namespace ClientConsole
             var dummyEvent = new
             {
                 Name = "John Smith",
+                Age = 42,
+                Address = new
+                {
+                    Street = "Baker",
+                    StreetNumber = "221B"
+                },
+                Skills = new[] { "Engineer", "Flight", "Programming", "Talking" },
                 CreatedAt = DateTime.UtcNow.ToString("o")
             };
 
