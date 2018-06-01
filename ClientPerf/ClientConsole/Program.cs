@@ -9,17 +9,16 @@ namespace ClientConsole
         {
             var connectionString = Environment.GetEnvironmentVariable("CONNECTION_STRING");
             var scenario = Environment.GetEnvironmentVariable("SCENARIO");
+            var protocol = Environment.GetEnvironmentVariable("PROTOCOL");
+            var isAmqp = protocol.ToLower() == "amqp";
 
             Console.WriteLine($"Connection String:  {connectionString}");
             Console.WriteLine($"Scenario:  {scenario}");
 
             switch(scenario.ToLower())
             {
-                case "amqp-isolated-perf":
-                    new IsolatedPerfScenario(connectionString, true).RunAsync().Wait();
-                    break;
-                case "http-isolated-perf":
-                    new IsolatedPerfScenario(connectionString, false).RunAsync().Wait();
+                case "isolated-perf":
+                    new IsolatedPerfScenario(connectionString, isAmqp).RunAsync().Wait();
                     break;
                 default:
                     Console.WriteLine($"Unsupported scenario:  {scenario}");

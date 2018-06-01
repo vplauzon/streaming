@@ -4,7 +4,8 @@
       "commandName": "Project",
       "environmentVariables": {
         "CONNECTION_STRING": "Endpoint=sb://eh-rovdymiz3vorc.servicebus.windows.net/;SharedAccessKeyName=sendRule;SharedAccessKey=n5yxUYY6jfyohqj+OTCeLpziwHnVZDCBU8Nl4+J3FUg=;EntityPath=test-hub",
-        "SCENARIO": "http-isolated-perf"
+        "PROTOCOL": "amqp",
+        "SCENARIO": "isolated-perf"
       }
     }
   }

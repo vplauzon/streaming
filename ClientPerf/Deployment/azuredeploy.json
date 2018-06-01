@@ -26,10 +26,12 @@
     "Send Rule Id": "[resourceId('Microsoft.EventHub/namespaces/eventHubs/authorizationRules', variables('Event Hub Namespace'), variables('Event Hub Name'), variables('Send Rule Name'))]",
     "containers": [
       {
-        "scenario": "amqp-isolated-perf"
+        "protocol": "amqp",
+        "scenario": "isolated-perf"
       },
       {
-        "scenario": "http-isolated-perf"
+        "protocol": "http",
+        "scenario": "isolated-perf"
       }
     ]
   },
@@ -88,7 +90,7 @@
         "name": "Container-group-copy",
         "count": "[length(variables('containers'))]"
       },
-      "name": "[concat(variables('containers')[copyIndex()].scenario, '-group')]",
+      "name": "[concat(variables('containers')[copyIndex()].scenario, '-', variables('containers')[copyIndex()].protocol, '-group')]",
       "location": "[parameters('Location')]",
       "dependsOn": [
         "[variables('Send Rule Id')]"
@@ -97,7 +99,7 @@
         "restartPolicy": "Never",
         "containers": [
           {
-            "name": "[variables('containers')[copyIndex()].scenario]",
+            "name": "container",
             "properties": {
               "image": "vplauzon/client-perf-event-hub",
               "environmentVariables": [
@@ -108,6 +110,10 @@
                 {
                   "name": "SCENARIO",
                   "value": "[variables('containers')[copyIndex()].scenario]"
+                },
+                {
+                  "name": "PROTOCOL",
+                  "value": "[variables('containers')[copyIndex()].protocol]"
                 }
               ],
               "resources": {
