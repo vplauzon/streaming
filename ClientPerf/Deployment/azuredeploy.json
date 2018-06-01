@@ -26,7 +26,10 @@
     "Send Rule Id": "[resourceId('Microsoft.EventHub/namespaces/eventHubs/authorizationRules', variables('Event Hub Namespace'), variables('Event Hub Name'), variables('Send Rule Name'))]",
     "containers": [
       {
-        "scenario": "isolation"
+        "scenario": "amqp-isolated-perf"
+      },
+      {
+        "scenario": "http-isolated-perf"
       }
     ]
   },

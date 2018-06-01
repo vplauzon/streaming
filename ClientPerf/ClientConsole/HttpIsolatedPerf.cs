@@ -13,9 +13,9 @@ namespace ClientConsole
     /// <summary>
     /// Based on https://docs.microsoft.com/en-us/rest/api/eventhub/Send-event
     /// </summary>
-    public class Http : Scenario
+    public class HttpIsolatedPerf : Scenario
     {
-        public Http(string connectionString) : base(connectionString)
+        public HttpIsolatedPerf(string connectionString) : base(connectionString)
         {
         }
 

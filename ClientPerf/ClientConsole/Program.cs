@@ -13,13 +13,13 @@ namespace ClientConsole
             Console.WriteLine($"Connection String:  {connectionString}");
             Console.WriteLine($"Scenario:  {scenario}");
 
-            switch(scenario.ToUpper())
+            switch(scenario.ToLower())
             {
-                case "ISOLATION":
-                    new Isolation(connectionString).RunAsync().Wait();
+                case "amqp-isolated-perf":
+                    new AmqpIsolatedPerf(connectionString).RunAsync().Wait();
                     break;
-                case "HTTP":
-                    new Http(connectionString).RunAsync().Wait();
+                case "http-isolated-perf":
+                    new HttpIsolatedPerf(connectionString).RunAsync().Wait();
                     break;
                 default:
                     Console.WriteLine($"Unsupported scenario:  {scenario}");
