@@ -23,7 +23,7 @@ namespace ClientConsole
             return ASCIIEncoding.ASCII.GetBytes(GetDummyEventString());
         }
 
-        protected static string GetDummyEventString()
+        protected static object GetDummyEventObject()
         {
             var dummyEvent = new
             {
@@ -31,7 +31,12 @@ namespace ClientConsole
                 CreatedAt = DateTime.UtcNow.ToString("o")
             };
 
-            return JsonConvert.SerializeObject(dummyEvent);
+            return dummyEvent;
+        }
+
+        protected static string GetDummyEventString()
+        {
+            return JsonConvert.SerializeObject(GetDummyEventObject());
         }
 
         protected async static Task<TimeSpan> TimeFunctionAsync(Func<Task> function)
