@@ -14,6 +14,8 @@ namespace ClientConsole
 
             Console.WriteLine($"Connection String:  {connectionString}");
             Console.WriteLine($"Scenario:  {scenario}");
+            Console.WriteLine($"Protocol:  {protocol}");
+            Console.WriteLine();
 
             switch (scenario.ToLower())
             {
@@ -25,6 +27,9 @@ namespace ClientConsole
                     break;
                 case "batch-perf":
                     new BatchPerfScenario(connectionString, isAmqp).RunAsync().Wait();
+                    break;
+                case "isolated-throughput":
+                    new IsolatedThroughputScenario(connectionString, isAmqp).RunAsync().Wait();
                     break;
                 default:
                     Console.WriteLine($"Unsupported scenario:  {scenario}");

@@ -31,7 +31,7 @@ namespace ClientConsole
         {
             var dummyEvent = new
             {
-                Name = "John Smith",
+                Name = "John Smith-A",
                 Age = 42,
                 Address = new
                 {
@@ -45,14 +45,36 @@ namespace ClientConsole
             return dummyEvent;
         }
 
-        protected async static Task<TimeSpan> TimeFunctionAsync(Func<Task> function)
+        protected async static Task<TimeSpan> TimeFunctionAsync(Func<Task> asyncFunction)
         {
             var watch = new Stopwatch();
 
             watch.Start();
-            await function();
+            await asyncFunction();
 
             return watch.Elapsed;
         }
+
+        protected async static Task<IEnumerable<T>> LoopUntilElapseAsync<T>(Func<Task<T>> asyncFunction, TimeSpan elapse)
+        {
+            var watch = new Stopwatch();
+            var list = new List<T>();
+
+            watch.Start();
+
+            do
+            {
+                var result = await asyncFunction();
+
+                list.Add(result);
+            }
+            while (watch.Elapsed < elapse);
+
+            return list;
+        }
+
+        //protected async static Task<IEnumerable<T>> ParallelizeAsync<T>(Func<Task<T>> asyncFunction, TimeSpan elapse)
+        //{
+        //}
     }
 }

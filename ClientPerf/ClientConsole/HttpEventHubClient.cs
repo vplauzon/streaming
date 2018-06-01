@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
@@ -65,12 +66,14 @@ namespace ClientConsole
             var resourceUrl = $"https://{nameSpace}.servicebus.windows.net/{_builder.EntityPath}";
             var url = $"{resourceUrl}/messages?api-version=2014-01&timeout=60";
             var payload = from b in batch
-                          select new { Body = b };
-            var content = new StringContent(
-                JsonConvert.SerializeObject(payload.ToArray()),
-                Encoding.UTF8,
-                "application/vnd.microsoft.servicebus.json");
+                          //    We need 
+                          select new { Body = JsonConvert.SerializeObject(b) };
+            //  We mustn't set the charset for batch, otherwise it is interpreted as
+            //  one big message
+            var content = new StringContent(JsonConvert.SerializeObject(payload.ToArray()));
 
+            content.Headers.ContentType = new MediaTypeHeaderValue("application/vnd.microsoft.servicebus.json");
+            _client.DefaultRequestHeaders.Remove("Authorization");
             _client.DefaultRequestHeaders.TryAddWithoutValidation(
                 "Authorization",
                 CreateToken(resourceUrl, _builder.SasKeyName, _builder.SasKey));
