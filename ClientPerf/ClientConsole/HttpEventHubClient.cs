@@ -11,7 +11,7 @@ using System.Web;
 
 namespace ClientConsole
 {
-    public class HttpEventHubClient
+    public class HttpEventHubClient : IEventHubClient
     {
         private readonly HttpClient _client = new HttpClient();
         private readonly string _connectionString;
@@ -21,12 +21,12 @@ namespace ClientConsole
             _connectionString = connectionString;
         }
 
-        public static HttpEventHubClient CreateFromConnectionString(string connectionString)
+        public static IEventHubClient CreateFromConnectionString(string connectionString)
         {
             return new HttpEventHubClient(connectionString);
         }
 
-        public async Task SendAsync(object jsonPayload)
+        async Task IEventHubClient.SendAsync(object jsonPayload)
         {
             var builder = new EventHubsConnectionStringBuilder(_connectionString);
             var nameSpace = builder.Endpoint.Authority.Split('.')[0];
@@ -45,7 +45,7 @@ namespace ClientConsole
             var responseText = await response.Content.ReadAsStringAsync();
         }
 
-        public Task CloseAsync()
+        Task IEventHubClient.CloseAsync()
         {
             _client.Dispose();
 

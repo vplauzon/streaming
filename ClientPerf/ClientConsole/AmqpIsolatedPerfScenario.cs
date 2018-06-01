@@ -1,5 +1,4 @@
-﻿using Microsoft.Azure.EventHubs;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
@@ -24,11 +23,11 @@ namespace ClientConsole
 
         private async Task SendOneEventAsync()
         {
-            var client = EventHubClient.CreateFromConnectionString(ConnectionString);
+            var client = AmqpEventHubClient.CreateFromConnectionString(ConnectionString);
 
             try
             {
-                await client.SendAsync(new EventData(GetDummyEventBinary()));
+                await client.SendAsync(GetDummyEventObject());
             }
             finally
             {

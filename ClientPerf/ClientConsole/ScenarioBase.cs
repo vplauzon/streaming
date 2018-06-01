@@ -18,11 +18,6 @@ namespace ClientConsole
 
         public abstract Task RunAsync();
 
-        protected static byte[] GetDummyEventBinary()
-        {
-            return ASCIIEncoding.ASCII.GetBytes(GetDummyEventString());
-        }
-
         protected static object GetDummyEventObject()
         {
             var dummyEvent = new
@@ -32,11 +27,6 @@ namespace ClientConsole
             };
 
             return dummyEvent;
-        }
-
-        protected static string GetDummyEventString()
-        {
-            return JsonConvert.SerializeObject(GetDummyEventObject());
         }
 
         protected async static Task<TimeSpan> TimeFunctionAsync(Func<Task> function)
