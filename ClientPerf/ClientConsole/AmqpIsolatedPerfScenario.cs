@@ -6,9 +6,9 @@ using System.Threading.Tasks;
 
 namespace ClientConsole
 {
-    public class AmqpIsolatedPerf : Scenario
+    public class AmqpIsolatedPerfScenario : ScenarioBase
     {
-        public AmqpIsolatedPerf(string connectionString) : base(connectionString)
+        public AmqpIsolatedPerfScenario(string connectionString) : base(connectionString)
         {
         }
 

@@ -7,9 +7,9 @@ using System.Threading.Tasks;
 
 namespace ClientConsole
 {
-    public abstract class Scenario
+    public abstract class ScenarioBase
     {
-        public Scenario(string connectionString)
+        public ScenarioBase(string connectionString)
         {
             ConnectionString = connectionString;
         }
