@@ -11,6 +11,9 @@ using System.Web;
 
 namespace ClientConsole
 {
+    /// <summary>
+    /// Based on https://docs.microsoft.com/en-us/rest/api/eventhub/Send-event
+    /// </summary>
     public class HttpEventHubClient : IEventHubClient
     {
         private readonly HttpClient _client = new HttpClient();

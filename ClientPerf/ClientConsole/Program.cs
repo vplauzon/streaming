@@ -16,10 +16,10 @@ namespace ClientConsole
             switch(scenario.ToLower())
             {
                 case "amqp-isolated-perf":
-                    new AmqpIsolatedPerfScenario(connectionString).RunAsync().Wait();
+                    new IsolatedPerfScenario(connectionString, true).RunAsync().Wait();
                     break;
                 case "http-isolated-perf":
-                    new HttpIsolatedPerfScenario(connectionString).RunAsync().Wait();
+                    new IsolatedPerfScenario(connectionString, false).RunAsync().Wait();
                     break;
                 default:
                     Console.WriteLine($"Unsupported scenario:  {scenario}");

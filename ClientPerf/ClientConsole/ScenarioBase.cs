@@ -9,14 +9,23 @@ namespace ClientConsole
 {
     public abstract class ScenarioBase
     {
-        public ScenarioBase(string connectionString)
+        private readonly string _connectionString;
+        private readonly bool _isAmqp;
+
+        public ScenarioBase(string connectionString, bool isAmqp)
         {
-            ConnectionString = connectionString;
+            _connectionString = connectionString;
+            _isAmqp = isAmqp;
         }
 
-        public string ConnectionString { get; }
-
         public abstract Task RunAsync();
+
+        protected IEventHubClient CreateEventHubClient()
+        {
+            return _isAmqp
+                ? AmqpEventHubClient.CreateFromConnectionString(_connectionString)
+                : HttpEventHubClient.CreateFromConnectionString(_connectionString);
+        }
 
         protected static object GetDummyEventObject()
         {

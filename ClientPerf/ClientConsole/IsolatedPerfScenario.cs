@@ -5,9 +5,9 @@ using System.Threading.Tasks;
 
 namespace ClientConsole
 {
-    public class AmqpIsolatedPerfScenario : ScenarioBase
+    public class IsolatedPerfScenario : ScenarioBase
     {
-        public AmqpIsolatedPerfScenario(string connectionString) : base(connectionString)
+        public IsolatedPerfScenario(string connectionString, bool isAmqp) : base(connectionString, isAmqp)
         {
         }
 
@@ -23,7 +23,7 @@ namespace ClientConsole
 
         private async Task SendOneEventAsync()
         {
-            var client = AmqpEventHubClient.CreateFromConnectionString(ConnectionString);
+            var client = CreateEventHubClient();
 
             try
             {
