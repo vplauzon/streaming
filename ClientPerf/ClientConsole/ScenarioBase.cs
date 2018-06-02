@@ -1,8 +1,6 @@
-﻿using Newtonsoft.Json;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace ClientConsole
@@ -31,7 +29,7 @@ namespace ClientConsole
         {
             var dummyEvent = new
             {
-                Name = "John Smith-A",
+                Name = "John Smith",
                 Age = 42,
                 Address = new
                 {
@@ -54,27 +52,5 @@ namespace ClientConsole
 
             return watch.Elapsed;
         }
-
-        protected async static Task<IEnumerable<T>> LoopUntilElapseAsync<T>(Func<Task<T>> asyncFunction, TimeSpan elapse)
-        {
-            var watch = new Stopwatch();
-            var list = new List<T>();
-
-            watch.Start();
-
-            do
-            {
-                var result = await asyncFunction();
-
-                list.Add(result);
-            }
-            while (watch.Elapsed < elapse);
-
-            return list;
-        }
-
-        //protected async static Task<IEnumerable<T>> ParallelizeAsync<T>(Func<Task<T>> asyncFunction, TimeSpan elapse)
-        //{
-        //}
     }
 }

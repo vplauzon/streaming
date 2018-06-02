@@ -15,6 +15,7 @@ namespace ClientConsole
 {
     /// <summary>
     /// Based on https://docs.microsoft.com/en-us/rest/api/eventhub/Send-event
+    /// & https://docs.microsoft.com/en-us/rest/api/eventhub/send-batch-events.
     /// </summary>
     public class HttpEventHubClient : IEventHubClient
     {
