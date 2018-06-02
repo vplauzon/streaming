@@ -19,7 +19,7 @@ namespace ClientConsole
             {
                 var elasped = await TimeFunctionAsync(SendBatchEventAsync);
 
-                Console.WriteLine($"One Event:  {elasped}");
+                Console.WriteLine($"{BATCH_SIZE} events:  {elasped}");
             }
         }
 

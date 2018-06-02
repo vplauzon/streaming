@@ -3,7 +3,7 @@
     "ClientConsole": {
       "commandName": "Project",
       "environmentVariables": {
-        "CONNECTION_STRING": "Endpoint=sb://eh-vfm63x7ihh5nc.servicebus.windows.net/;SharedAccessKeyName=sendRule;SharedAccessKey=beFcIAFBEjhasnjQDXXcMd9LDWH213/T3vKEdRKH6LU=;EntityPath=test-hub",
+        "CONNECTION_STRING": "Endpoint=sb://eh-ss5bgqk6gixxe.servicebus.windows.net/;SharedAccessKeyName=sendRule;SharedAccessKey=O22k9rRdOPmNJzUg/AXOyn7+lBHeHLqTDAapzIGV9Rs=;EntityPath=test-hub",
         "PROTOCOL": "amqp",
         "SCENARIO": "isolated-throughput"
       }
