@@ -6,7 +6,7 @@ namespace ClientConsole
 {
     public class BatchOneByOnePerfScenario : ScenarioBase
     {
-        private int _batchSize;
+        private readonly int _batchSize;
 
         public BatchOneByOnePerfScenario(string connectionString, bool isAmqp, int batchSize) :
             base(connectionString, isAmqp)
