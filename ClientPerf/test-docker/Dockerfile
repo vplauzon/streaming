@@ -10,6 +10,8 @@ ADD temp/* /work/
 # Define environment variables
 ENV CONNECTION_STRING "Missing Connection String"
 ENV SCENARIO "Missing Scenario"
+ENV PROTOCOL "Missing Protocol"
+ENV BATCH_SIZE "Missing Batch Size"
 
 # Run console app
 CMD ["dotnet", "run", "-c", "Release", "ClientConsole"]
