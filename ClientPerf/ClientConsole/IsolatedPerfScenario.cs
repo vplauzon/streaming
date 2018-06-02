@@ -7,7 +7,8 @@ namespace ClientConsole
 {
     public class IsolatedPerfScenario : ScenarioBase
     {
-        public IsolatedPerfScenario(string connectionString, bool isAmqp) : base(connectionString, isAmqp)
+        public IsolatedPerfScenario(string connectionString, bool isAmqp)
+            : base(connectionString, isAmqp)
         {
         }
 
