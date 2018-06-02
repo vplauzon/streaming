@@ -40,23 +40,22 @@ namespace ClientConsole
         private async Task<int> OneThreadAsync(CancellationToken cancellationToken)
         {
             int eventCount = 0;
+            var client = CreateEventHubClient();
 
-            while (!cancellationToken.IsCancellationRequested)
+            try
             {
-                var client = CreateEventHubClient();
-
-                try
+                while (!cancellationToken.IsCancellationRequested)
                 {
                     await client.SendAsync(GetDummyEventObject());
+                    ++eventCount;
                 }
-                finally
-                {
-                    await client.CloseAsync();
-                }
-                ++eventCount;
-            }
 
-            return eventCount;
+                return eventCount;
+            }
+            finally
+            {
+                await client.CloseAsync();
+            }
         }
     }
 }

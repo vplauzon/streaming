@@ -48,6 +48,23 @@
       {
         "protocol": "http",
         "scenario": "batch-perf"
+      },
+      {
+        "protocol": "amqp",
+        "scenario": "isolated-throughput"
+      },
+      {
+        "protocol": "http",
+        "scenario": "isolated-throughput"
+      },
+
+      {
+        "protocol": "amqp",
+        "scenario": "batch-one-by-one-throughput"
+      },
+      {
+        "protocol": "http",
+        "scenario": "batch-one-by-one-throughput"
       }
     ]
   },
