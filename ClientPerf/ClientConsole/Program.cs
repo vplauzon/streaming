@@ -10,7 +10,7 @@ namespace ClientConsole
             var connectionString = Environment.GetEnvironmentVariable("CONNECTION_STRING");
             var scenario = Environment.GetEnvironmentVariable("SCENARIO");
             var protocol = Environment.GetEnvironmentVariable("PROTOCOL");
-            var batchSize = Environment.GetEnvironmentVariable("BATCH_SIZE");
+            var batchSize = ParseInt(Environment.GetEnvironmentVariable("BATCH_SIZE"));
             var isAmqp = protocol.ToLower() == "amqp";
 
             Console.WriteLine($"Connection String:  {connectionString}");
@@ -45,6 +45,15 @@ namespace ClientConsole
 
             Console.WriteLine();
             Console.WriteLine($"Total number of events:  {totalEvents}");
+        }
+
+        private static int ParseInt(string text)
+        {
+            int value;
+
+            return int.TryParse(text, out value)
+                ? value
+                : 0;
         }
     }
 }

@@ -35,19 +35,23 @@
       },
       {
         "protocol": "amqp",
-        "scenario": "batch-one-by-one-perf"
+        "scenario": "batch-one-by-one-perf",
+        "batchSize": 1000
       },
       {
         "protocol": "http",
-        "scenario": "batch-one-by-one-perf"
+        "scenario": "batch-one-by-one-perf",
+        "batchSize": 1000
       },
       {
         "protocol": "amqp",
-        "scenario": "batch-perf"
+        "scenario": "batch-perf",
+        "batchSize": 50
       },
       {
         "protocol": "http",
-        "scenario": "batch-perf"
+        "scenario": "batch-perf",
+        "batchSize": 50
       },
       {
         "protocol": "amqp",
@@ -147,6 +151,10 @@
                 {
                   "name": "PROTOCOL",
                   "value": "[variables('containers')[copyIndex()].protocol]"
+                },
+                {
+                  "name": "BATCH_SIZE",
+                  "value": "[variables('containers')[copyIndex()].batchSize]"
                 }
               ],
               "resources": {
