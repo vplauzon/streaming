@@ -6,11 +6,12 @@ namespace ClientConsole
 {
     public class BatchOneByOnePerfScenario : ScenarioBase
     {
-        private const int BATCH_SIZE = 50;
+        private int _batchSize;
 
-        public BatchOneByOnePerfScenario(string connectionString, bool isAmqp) :
+        public BatchOneByOnePerfScenario(string connectionString, bool isAmqp, int batchSize) :
             base(connectionString, isAmqp)
         {
+            _batchSize = batchSize;
         }
 
         public override async Task RunAsync()
@@ -19,14 +20,14 @@ namespace ClientConsole
             {
                 var elasped = await TimeFunctionAsync(SendBatchEventAsync);
 
-                Console.WriteLine($"{BATCH_SIZE} events:  {elasped}");
+                Console.WriteLine($"{_batchSize} events:  {elasped}");
             }
         }
 
         private async Task SendBatchEventAsync()
         {
             var client = CreateEventHubClient();
-            var batch = from i in Enumerable.Range(0, BATCH_SIZE)
+            var batch = from i in Enumerable.Range(0, _batchSize)
                         select GetDummyEventObject();
 
             try
