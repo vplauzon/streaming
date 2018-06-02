@@ -55,20 +55,27 @@
       },
       {
         "protocol": "amqp",
-        "scenario": "isolated-throughput"
+        "scenario": "isolated-throughput",
+        "threadCount": 100,
+        "samplingTime": "0:2:0"
       },
       {
         "protocol": "http",
-        "scenario": "isolated-throughput"
+        "scenario": "isolated-throughput",
+        "threadCount": 100,
+        "samplingTime": "0:2:0"
       },
-
       {
         "protocol": "amqp",
-        "scenario": "batch-one-by-one-throughput"
+        "scenario": "batch-one-by-one-throughput",
+        "threadCount": 100,
+        "samplingTime": "0:2:0"
       },
       {
         "protocol": "http",
-        "scenario": "batch-one-by-one-throughput"
+        "scenario": "batch-one-by-one-throughput",
+        "threadCount": 100,
+        "samplingTime": "0:2:0"
       }
     ]
   },
@@ -155,6 +162,14 @@
                 {
                   "name": "BATCH_SIZE",
                   "value": "[variables('containers')[copyIndex()].batchSize]"
+                },
+                {
+                  "name": "THREAD_COUNT",
+                  "value": "[variables('containers')[copyIndex()].threadCount]"
+                },
+                {
+                  "name": "SAMPLING_TIME",
+                  "value": "[variables('containers')[copyIndex()].samplingTime]"
                 }
               ],
               "resources": {

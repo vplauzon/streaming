@@ -4,8 +4,11 @@
       "commandName": "Project",
       "environmentVariables": {
         "CONNECTION_STRING": "Endpoint=sb://eh-ss5bgqk6gixxe.servicebus.windows.net/;SharedAccessKeyName=sendRule;SharedAccessKey=O22k9rRdOPmNJzUg/AXOyn7+lBHeHLqTDAapzIGV9Rs=;EntityPath=test-hub",
+        "SCENARIO": "batch-one-by-one-throughput",
         "PROTOCOL": "http",
-        "SCENARIO": "batch-one-by-one-throughput"
+        "BATCH_SIZE": "50",
+        "THREAD_COUNT": "10",
+        "SAMPLING_TIME": "0:0:10"
       }
     }
   }

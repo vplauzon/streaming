@@ -7,12 +7,14 @@ namespace ClientConsole
 {
     public class IsolatedThroughputScenario : ScenarioBase
     {
-        private const int THREAD_COUNT = 10;
-        private static readonly TimeSpan SAMPLING_TIME = TimeSpan.FromSeconds(10);
+        private readonly int _threadCount;
+        private readonly TimeSpan _samplingTime;
 
-        public IsolatedThroughputScenario(string connectionString, bool isAmqp)
+        public IsolatedThroughputScenario(string connectionString, bool isAmqp, int threadCount, TimeSpan samplingTime)
             : base(connectionString, isAmqp)
         {
+            _threadCount = threadCount;
+            _samplingTime = samplingTime;
         }
 
         public override async Task RunAsync()
@@ -20,8 +22,8 @@ namespace ClientConsole
             int count = 0;
             var elapsed = await TimeFunctionAsync(async () =>
             {
-                var cancellationTokenSource = new CancellationTokenSource(SAMPLING_TIME);
-                var threads = (from i in Enumerable.Range(0, THREAD_COUNT)
+                var cancellationTokenSource = new CancellationTokenSource(_samplingTime);
+                var threads = (from i in Enumerable.Range(0, _threadCount)
                                select OneThreadAsync(cancellationTokenSource.Token)).ToArray();
 
                 await Task.WhenAll(threads);
