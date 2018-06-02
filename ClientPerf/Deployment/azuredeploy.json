@@ -27,53 +27,71 @@
     "containers": [
       {
         "protocol": "amqp",
-        "scenario": "isolated-perf"
+        "scenario": "isolated-perf",
+        "batchSize": 0,
+        "threadCount": 0,
+        "samplingTime": "0:0:0"
       },
       {
         "protocol": "http",
-        "scenario": "isolated-perf"
+        "scenario": "isolated-perf",
+        "batchSize": 0,
+        "threadCount": 0,
+        "samplingTime": "0:0:0"
       },
       {
         "protocol": "amqp",
         "scenario": "batch-one-by-one-perf",
-        "batchSize": 1000
+        "batchSize": 1000,
+        "threadCount": 0,
+        "samplingTime": "0:0:0"
       },
       {
         "protocol": "http",
         "scenario": "batch-one-by-one-perf",
-        "batchSize": 1000
+        "batchSize": 1000,
+        "threadCount": 0,
+        "samplingTime": "0:0:0"
       },
       {
         "protocol": "amqp",
         "scenario": "batch-perf",
-        "batchSize": 50
+        "batchSize": 50,
+        "threadCount": 0,
+        "samplingTime": "0:0:0"
       },
       {
         "protocol": "http",
         "scenario": "batch-perf",
-        "batchSize": 50
+        "batchSize": 50,
+        "threadCount": 0,
+        "samplingTime": "0:0:0"
       },
       {
         "protocol": "amqp",
         "scenario": "isolated-throughput",
+        "batchSize": 0,
         "threadCount": 100,
         "samplingTime": "0:2:0"
       },
       {
         "protocol": "http",
         "scenario": "isolated-throughput",
+        "batchSize": 0,
         "threadCount": 100,
         "samplingTime": "0:2:0"
       },
       {
         "protocol": "amqp",
         "scenario": "batch-one-by-one-throughput",
+        "batchSize": 0,
         "threadCount": 100,
         "samplingTime": "0:2:0"
       },
       {
         "protocol": "http",
         "scenario": "batch-one-by-one-throughput",
+        "batchSize": 0,
         "threadCount": 100,
         "samplingTime": "0:2:0"
       }
