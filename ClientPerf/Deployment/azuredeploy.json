@@ -221,7 +221,7 @@
               "resources": {
                 "requests": {
                   "cpu": 1,
-                  "memoryInGb": 0.2
+                  "memoryInGb": 1
                 }
               }
             }
