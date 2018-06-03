@@ -43,6 +43,9 @@ namespace ClientConsole
                 case "batch-throughput":
                     new BatchThroughputScenario(connectionString, isAmqp, batchSize, threadCount, samplingTime).RunAsync().Wait();
                     break;
+                case "isolated-pool-throughput":
+                    new IsolatedPoolThroughputScenario(connectionString, isAmqp, threadCount, samplingTime).RunAsync().Wait();
+                    break;
                 default:
                     Console.WriteLine($"Unsupported scenario:  {scenario}");
                     break;
