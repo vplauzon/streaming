@@ -1,17 +1,41 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.Concurrent;
+using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Threading;
 
 namespace ClientConsole
 {
     public class BufferBatchEventHubClient : IEventHubClient
     {
+        #region Inner Types
+        private class BufferedItem
+        {
+            private readonly TaskCompletionSource<object> _completionSource =
+                new TaskCompletionSource<object>();
+
+            public BufferedItem(object payload)
+            {
+                Payload = payload;
+            }
+
+            public object Payload { get; }
+
+            public Task WaitForCompletionAsync() => _completionSource.Task;
+
+            public void Complete() => _completionSource.SetResult(null);
+        }
+        #endregion
+
+        private static readonly TimeSpan BUFFER_DELAY = TimeSpan.FromSeconds(.1);
+
         private readonly EventHubClientPool _clientPool;
         private readonly int _batchSize;
-        private readonly ConcurrentQueue<(object, TaskCompletionSource<object>)> _queue =
-            new ConcurrentQueue<(object, TaskCompletionSource<object>)>();
+        private readonly ConcurrentQueue<BufferedItem> _queue =
+            new ConcurrentQueue<BufferedItem>();
+        private CancellationTokenSource _currentBufferingTokenSource;
 
         public BufferBatchEventHubClient(Func<IEventHubClient> clientFactory, int batchSize)
         {
@@ -21,12 +45,29 @@ namespace ClientConsole
 
         async Task IEventHubClient.SendAsync(object jsonPayload)
         {
-            var item = (jsonPayload, taskSource: new TaskCompletionSource<object>());
+            var item = new BufferedItem(jsonPayload);
+            Task delayTask = null;
 
-            _queue.Enqueue(item);
-            await item.taskSource.Task;
-            //item.taskSource.SetResult(null);
-            throw new NotImplementedException();
+            lock (_queue)
+            {
+                _queue.Enqueue(item);
+                if (_currentBufferingTokenSource == null)
+                {
+                    _currentBufferingTokenSource = new CancellationTokenSource();
+                    delayTask = Task.Delay(BUFFER_DELAY, _currentBufferingTokenSource.Token);
+                }
+                if (_queue.Count >= _batchSize)
+                {   //  Force the buffering to stop and the batch send to occur "now"
+                    _currentBufferingTokenSource.Cancel();
+                    _currentBufferingTokenSource = null;
+                }
+            }
+            if (delayTask != null)
+            {   //  This thread won the actual send process
+                await delayTask;
+                await SendBufferedBatchAsync();
+            }
+            await item.WaitForCompletionAsync();
         }
 
         async Task IEventHubClient.SendBatchAsync(IEnumerable<object> batch)
@@ -45,7 +86,56 @@ namespace ClientConsole
 
         async Task IEventHubClient.CloseAsync()
         {
+            var allItemWaitTask = from i in _queue.ToArray()
+                                  select i.WaitForCompletionAsync();
+
+            await Task.WhenAll(allItemWaitTask);
             await _clientPool.CloseAsync();
+        }
+
+        private async Task SendBufferedBatchAsync()
+        {
+            var buffer = DequeueBuffer();
+
+            if (buffer.Length > 0)
+            {
+                var payloads = (from item in buffer
+                                select item.Payload).ToArray();
+                var client = _clientPool.GetClient();
+
+                await client.SendBatchAsync(payloads);
+                _clientPool.ReleaseClient(client);
+
+                foreach (var item in buffer)
+                {
+                    item.Complete();
+                }
+            }
+        }
+
+        private BufferedItem[] DequeueBuffer()
+        {
+            var list = new List<BufferedItem>();
+
+            lock (_queue)
+            {
+                while (list.Count < _batchSize)
+                {
+                    BufferedItem item;
+
+                    if (_queue.TryDequeue(out item))
+                    {
+                        list.Add(item);
+                    }
+                    else
+                    {
+                        break;
+                    }
+                }
+                _currentBufferingTokenSource = null;
+            }
+
+            return list.ToArray();
         }
     }
 }
