@@ -108,6 +108,20 @@
         "batchSize": 0,
         "threadCount": 100,
         "samplingTime": "0:2:0"
+      },
+      {
+        "protocol": "amqp",
+        "scenario": "isolated-pool-throughput",
+        "batchSize": 50,
+        "threadCount": 100,
+        "samplingTime": "0:2:0"
+      },
+      {
+        "protocol": "http",
+        "scenario": "isolated-pool-throughput",
+        "batchSize": 50,
+        "threadCount": 100,
+        "samplingTime": "0:2:0"
       }
     ]
   },
