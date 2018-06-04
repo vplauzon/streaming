@@ -4,7 +4,7 @@
       "commandName": "Project",
       "environmentVariables": {
         "CONNECTION_STRING": "Endpoint=sb://eh-zw5aasrleahgi.servicebus.windows.net/;SharedAccessKeyName=sendRule;SharedAccessKey=1YgKsoBZFQUFRic2tHBH0fvn2sEHXndfGDtsgW2BYmE=;EntityPath=test-hub",
-        "SCENARIO": "batch-throughput",
+        "SCENARIO": "batch-buffer-throughput",
         "PROTOCOL": "http",
         "BATCH_SIZE": "50",
         "THREAD_COUNT": "10",
