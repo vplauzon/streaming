@@ -113,7 +113,7 @@
       "sku": {
         "name": "Standard",
         "tier": "Standard",
-        "capacity": 20
+        "capacity": 10
       },
       "properties": {
         "isAutoInflateEnabled": false,
