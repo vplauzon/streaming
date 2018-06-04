@@ -8,7 +8,7 @@ using System.Threading;
 
 namespace ClientConsole
 {
-    public class BufferBatchEventHubClient : IEventHubClient
+    public class UnsafeBufferBatchEventHubClient : IEventHubClient
     {
         private static readonly TimeSpan BUFFER_DELAY = TimeSpan.FromSeconds(.1);
         private static readonly int BACKOFF_RATIO = 15;
@@ -20,7 +20,7 @@ namespace ClientConsole
             new ConcurrentQueue<object>();
         private object _currentBatchProcessId = null;
 
-        public BufferBatchEventHubClient(EventHubClientPool pool, int batchSize)
+        public UnsafeBufferBatchEventHubClient(EventHubClientPool pool, int batchSize)
         {
             _clientPool = pool ?? throw new ArgumentNullException(nameof(pool));
             if (batchSize <= 0)

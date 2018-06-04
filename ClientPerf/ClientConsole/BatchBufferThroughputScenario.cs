@@ -29,7 +29,7 @@ namespace ClientConsole
             int count = 0;
             var elapsed = await TimeFunctionAsync(async () =>
             {
-                var proxyClient = new BufferBatchEventHubClient(
+                var proxyClient = new UnsafeBufferBatchEventHubClient(
                     new EventHubClientPool(() => CreateEventHubClient()),
                     _batchSize) as IEventHubClient;
 
