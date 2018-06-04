@@ -11,7 +11,8 @@ namespace ClientConsole
     public class BufferBatchEventHubClient : IEventHubClient
     {
         private static readonly TimeSpan BUFFER_DELAY = TimeSpan.FromSeconds(.1);
-        private static readonly int BACKOFF_RATIO = 5;
+        private static readonly int BACKOFF_RATIO = 15;
+        private static readonly TimeSpan BACKOFF_DELAY = TimeSpan.FromSeconds(.02);
 
         private readonly EventHubClientPool _clientPool;
         private readonly int _batchSize;
@@ -36,7 +37,7 @@ namespace ClientConsole
             if (_queue.Count > BACKOFF_RATIO * _batchSize)
             {   //  Too many elements in the queue
                 //  Let's back off the producers
-                await Task.Delay(BUFFER_DELAY);
+                await Task.Delay(BACKOFF_DELAY);
             }
         }
 
