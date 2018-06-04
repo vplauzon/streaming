@@ -46,8 +46,11 @@ namespace ClientConsole
                 case "isolated-pool-throughput":
                     new IsolatedPoolThroughputScenario(connectionString, isAmqp, threadCount, samplingTime).RunAsync().Wait();
                     break;
+                case "safe-batch-buffer-throughput":
+                    new BatchBufferThroughputScenario(connectionString, isAmqp, true, batchSize, threadCount, samplingTime).RunAsync().Wait();
+                    break;
                 case "unsafe-batch-buffer-throughput":
-                    new BatchBufferThroughputScenario(connectionString, isAmqp, batchSize, threadCount, samplingTime).RunAsync().Wait();
+                    new BatchBufferThroughputScenario(connectionString, isAmqp, false, batchSize, threadCount, samplingTime).RunAsync().Wait();
                     break;
                 default:
                     Console.WriteLine($"Unsupported scenario:  {scenario}");

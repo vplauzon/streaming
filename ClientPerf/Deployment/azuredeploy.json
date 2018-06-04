@@ -82,10 +82,20 @@
         {
           "delayStart": "0:10:0",
           "protocol": "amqp",
-          "scenario": "unsafe-batch-buffer-throughput"
+          "scenario": "safe-batch-buffer-throughput"
         },
         {
           "delayStart": "0:12:30",
+          "protocol": "http",
+          "scenario": "safe-batch-buffer-throughput"
+        },
+        {
+          "delayStart": "0:15:0",
+          "protocol": "amqp",
+          "scenario": "unsafe-batch-buffer-throughput"
+        },
+        {
+          "delayStart": "0:17:30",
           "protocol": "http",
           "scenario": "unsafe-batch-buffer-throughput"
         }

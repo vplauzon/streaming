@@ -7,6 +7,7 @@ namespace ClientConsole
 {
     public class BatchBufferThroughputScenario : ScenarioBase
     {
+        private readonly bool _isSafe;
         private readonly int _batchSize;
         private readonly int _threadCount;
         private readonly TimeSpan _samplingTime;
@@ -14,11 +15,13 @@ namespace ClientConsole
         public BatchBufferThroughputScenario(
             string connectionString,
             bool isAmqp,
+            bool isSafe,
             int batchSize,
             int threadCount,
             TimeSpan samplingTime)
             : base(connectionString, isAmqp)
         {
+            _isSafe = isSafe;
             _batchSize = batchSize;
             _threadCount = threadCount;
             _samplingTime = samplingTime;
@@ -29,9 +32,10 @@ namespace ClientConsole
             int count = 0;
             var elapsed = await TimeFunctionAsync(async () =>
             {
-                var proxyClient = new UnsafeBufferBatchEventHubClient(
-                    new EventHubClientPool(() => CreateEventHubClient()),
-                    _batchSize) as IEventHubClient;
+                var pool = new EventHubClientPool(() => CreateEventHubClient());
+                var proxyClient = _isSafe
+                    ? new SafeBufferBatchEventHubClient(pool, _batchSize) as IEventHubClient
+                    : new UnsafeBufferBatchEventHubClient(pool, _batchSize);
 
                 try
                 {
@@ -50,7 +54,6 @@ namespace ClientConsole
                 {
                     await proxyClient.CloseAsync();
                 }
-
             });
 
             Console.WriteLine($"Total Events:  {count}");
