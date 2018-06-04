@@ -24,104 +24,73 @@
     "Event Hub Id": "[resourceId('Microsoft.EventHub/namespaces/eventhubs', variables('Event Hub Namespace'), variables('Event Hub Name'))]",
     "Send Rule Name": "sendRule",
     "Send Rule Id": "[resourceId('Microsoft.EventHub/namespaces/eventHubs/authorizationRules', variables('Event Hub Namespace'), variables('Event Hub Name'), variables('Send Rule Name'))]",
-    "containers": [
-      {
-        "delayStart": "0:0:0",
-        "protocol": "amqp",
-        "scenario": "isolated-perf",
-        "batchSize": 0,
-        "threadCount": 0,
-        "samplingTime": "0:0:0"
-      },
-      {
-        "delayStart": "0:0:0",
-        "protocol": "http",
-        "scenario": "isolated-perf",
-        "batchSize": 0,
-        "threadCount": 0,
-        "samplingTime": "0:0:0"
-      },
-      {
-        "delayStart": "0:0:0",
-        "protocol": "amqp",
-        "scenario": "batch-one-by-one-perf",
-        "batchSize": 50,
-        "threadCount": 0,
-        "samplingTime": "0:0:0"
-      },
-      {
-        "delayStart": "0:0:0",
-        "protocol": "http",
-        "scenario": "batch-one-by-one-perf",
-        "batchSize": 50,
-        "threadCount": 0,
-        "samplingTime": "0:0:0"
-      },
-      {
-        "delayStart": "0:0:0",
-        "protocol": "amqp",
-        "scenario": "batch-perf",
-        "batchSize": 50,
-        "threadCount": 0,
-        "samplingTime": "0:0:0"
-      },
-      {
-        "delayStart": "0:0:0",
-        "protocol": "http",
-        "scenario": "batch-perf",
-        "batchSize": 50,
-        "threadCount": 0,
-        "samplingTime": "0:0:0"
-      },
-      {
-        "delayStart": "0:0:0",
-        "protocol": "amqp",
-        "scenario": "isolated-throughput",
-        "batchSize": 0,
-        "threadCount": 100,
-        "samplingTime": "0:2:0"
-      },
-      {
-        "delayStart": "0:2:30",
-        "protocol": "http",
-        "scenario": "isolated-throughput",
-        "batchSize": 0,
-        "threadCount": 100,
-        "samplingTime": "0:2:0"
-      },
-      {
-        "delayStart": "0:5:0",
-        "protocol": "amqp",
-        "scenario": "isolated-pool-throughput",
-        "batchSize": 0,
-        "threadCount": 100,
-        "samplingTime": "0:2:0"
-      },
-      {
-        "delayStart": "0:7:30",
-        "protocol": "http",
-        "scenario": "isolated-pool-throughput",
-        "batchSize": 0,
-        "threadCount": 100,
-        "samplingTime": "0:2:0"
-      },
-      {
-        "delayStart": "0:10:0",
-        "protocol": "amqp",
-        "scenario": "unsafe-batch-buffer-throughput",
-        "batchSize": 50,
-        "threadCount": 100,
-        "samplingTime": "0:2:0"
-      },
-      {
-        "delayStart": "0:12:30",
-        "protocol": "http",
-        "scenario": "unsafe-batch-buffer-throughput",
-        "batchSize": 50,
-        "threadCount": 100,
-        "samplingTime": "0:2:0"
-      }
-    ]
+    "Test Configuration": {
+      "batchSize": 50,
+      "threadCount": 100,
+      "samplingTime": "0:2:0",
+      "containers": [
+        {
+          "delayStart": "0:0:0",
+          "protocol": "amqp",
+          "scenario": "isolated-perf"
+        },
+        {
+          "delayStart": "0:0:0",
+          "protocol": "http",
+          "scenario": "isolated-perf"
+        },
+        {
+          "delayStart": "0:0:0",
+          "protocol": "amqp",
+          "scenario": "batch-one-by-one-perf"
+        },
+        {
+          "delayStart": "0:0:0",
+          "protocol": "http",
+          "scenario": "batch-one-by-one-perf"
+        },
+        {
+          "delayStart": "0:0:0",
+          "protocol": "amqp",
+          "scenario": "batch-perf"
+        },
+        {
+          "delayStart": "0:0:0",
+          "protocol": "http",
+          "scenario": "batch-perf"
+        },
+        {
+          "delayStart": "0:0:0",
+          "protocol": "amqp",
+          "scenario": "isolated-throughput"
+        },
+        {
+          "delayStart": "0:2:30",
+          "protocol": "http",
+          "scenario": "isolated-throughput"
+        },
+        {
+          "delayStart": "0:5:0",
+          "protocol": "amqp",
+          "scenario": "isolated-pool-throughput"
+        },
+        {
+          "delayStart": "0:7:30",
+          "protocol": "http",
+          "scenario": "isolated-pool-throughput"
+        },
+        {
+          "delayStart": "0:10:0",
+          "protocol": "amqp",
+          "scenario": "unsafe-batch-buffer-throughput"
+        },
+        {
+          "delayStart": "0:12:30",
+          "protocol": "http",
+          "scenario": "unsafe-batch-buffer-throughput"
+        }
+      ]
+    }
   },
   "resources": [
     {
@@ -176,9 +145,9 @@
       "apiVersion": "2018-04-01",
       "copy": {
         "name": "Container-group-copy",
-        "count": "[length(variables('containers'))]"
+        "count": "[length(variables('Test Configuration').containers)]"
       },
-      "name": "[concat(variables('containers')[copyIndex()].scenario, '-', variables('containers')[copyIndex()].protocol, '-group')]",
+      "name": "[concat(variables('Test Configuration').containers[copyIndex()].scenario, '-', variables('Test Configuration').containers[copyIndex()].protocol, '-group')]",
       "location": "[parameters('Location')]",
       "dependsOn": [
         "[variables('Send Rule Id')]"
@@ -197,27 +166,27 @@
                 },
                 {
                   "name": "SCENARIO",
-                  "value": "[variables('containers')[copyIndex()].scenario]"
+                  "value": "[variables('Test Configuration').containers[copyIndex()].scenario]"
                 },
                 {
                   "name": "PROTOCOL",
-                  "value": "[variables('containers')[copyIndex()].protocol]"
+                  "value": "[variables('Test Configuration').containers[copyIndex()].protocol]"
                 },
                 {
                   "name": "BATCH_SIZE",
-                  "value": "[variables('containers')[copyIndex()].batchSize]"
+                  "value": "[variables('Test Configuration').batchSize]"
                 },
                 {
                   "name": "THREAD_COUNT",
-                  "value": "[variables('containers')[copyIndex()].threadCount]"
+                  "value": "[variables('Test Configuration').threadCount]"
                 },
                 {
                   "name": "SAMPLING_TIME",
-                  "value": "[variables('containers')[copyIndex()].samplingTime]"
+                  "value": "[variables('Test Configuration').samplingTime]"
                 },
                 {
                   "name": "DELAY_START",
-                  "value": "[variables('containers')[copyIndex()].delayStart]"
+                  "value": "[variables('Test Configuration').containers[copyIndex()].delayStart]"
                 }
               ],
               "resources": {
