@@ -10,32 +10,14 @@ namespace ClientConsole
 {
     public class BufferBatchEventHubClient : IEventHubClient
     {
-        #region Inner Types
-        private class BufferedItem
-        {
-            private readonly TaskCompletionSource<object> _completionSource =
-                new TaskCompletionSource<object>();
-
-            public BufferedItem(object payload)
-            {
-                Payload = payload;
-            }
-
-            public object Payload { get; }
-
-            public Task WaitForCompletionAsync() => _completionSource.Task;
-
-            public void Complete() => _completionSource.SetResult(null);
-        }
-        #endregion
-
         private static readonly TimeSpan BUFFER_DELAY = TimeSpan.FromSeconds(.1);
+        private static readonly int BACKOFF_RATIO = 5;
 
         private readonly EventHubClientPool _clientPool;
         private readonly int _batchSize;
-        private readonly ConcurrentQueue<BufferedItem> _queue =
-            new ConcurrentQueue<BufferedItem>();
-        private CancellationTokenSource _currentBufferingTokenSource;
+        private readonly ConcurrentQueue<object> _queue =
+            new ConcurrentQueue<object>();
+        private object _currentBatchProcessId = null;
 
         public BufferBatchEventHubClient(EventHubClientPool pool, int batchSize)
         {
@@ -49,29 +31,13 @@ namespace ClientConsole
 
         async Task IEventHubClient.SendAsync(object jsonPayload)
         {
-            var item = new BufferedItem(jsonPayload);
-            Task delayTask = null;
-
-            lock (_queue)
-            {
-                _queue.Enqueue(item);
-                if (_currentBufferingTokenSource == null)
-                {
-                    _currentBufferingTokenSource = new CancellationTokenSource();
-                    delayTask = Task.Delay(BUFFER_DELAY, _currentBufferingTokenSource.Token);
-                }
-                if (_queue.Count >= _batchSize)
-                {   //  Force the buffering to stop and the batch send to occur "now"
-                    _currentBufferingTokenSource.Cancel();
-                    _currentBufferingTokenSource = null;
-                }
+            _queue.Enqueue(jsonPayload);
+            EnsureDelayedBatchProcess();
+            if (_queue.Count > BACKOFF_RATIO * _batchSize)
+            {   //  Too many elements in the queue
+                //  Let's back off the producers
+                await Task.Delay(BUFFER_DELAY);
             }
-            if (delayTask != null)
-            {   //  This thread won the actual send process
-                await delayTask;
-                await SendBufferedBatchAsync();
-            }
-            await item.WaitForCompletionAsync();
         }
 
         async Task IEventHubClient.SendBatchAsync(IEnumerable<object> batch)
@@ -90,53 +56,93 @@ namespace ClientConsole
 
         async Task IEventHubClient.CloseAsync()
         {
-            var allItemWaitTask = from i in _queue.ToArray()
-                                  select i.WaitForCompletionAsync();
-
-            await Task.WhenAll(allItemWaitTask);
+            //  Ensure queue processing is initiated immediatly
+            await ProcessBatchAsync();
             await _clientPool.CloseAsync();
         }
 
-        private async Task SendBufferedBatchAsync()
+        private void EnsureDelayedBatchProcess()
         {
-            var buffer = DequeueBuffer();
-
-            if (buffer.Length > 0)
+            if (_currentBatchProcessId == null)
             {
-                var payloads = (from item in buffer
-                                select item.Payload).ToArray();
-                var client = _clientPool.GetClient();
+                var proposedId = new object();
 
-                await client.SendBatchAsync(payloads);
-                _clientPool.ReleaseClient(client);
-
-                foreach (var item in buffer)
-                {
-                    item.Complete();
+                if (Interlocked.CompareExchange(ref _currentBatchProcessId, proposedId, null)
+                    == null)
+                {   //  This thread won the id
+                    //  We will process batch in the background:  no wait
+#pragma warning disable CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
+                    WaitAndProcessAsync();
+#pragma warning restore CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
                 }
             }
         }
 
-        private BufferedItem[] DequeueBuffer()
+        private async Task WaitAndProcessAsync()
         {
-            var list = new List<BufferedItem>();
-
-            lock (_queue)
+            try
             {
-                while (list.Count < _batchSize)
-                {
-                    BufferedItem item;
+                await Task.Delay(BUFFER_DELAY);
+                await ProcessBatchAsync();
+            }
+            //  It would be really important to log errors here as nothing is awaiting
+            //  this task, hence errors would go in oblivion
+            catch (AggregateException ex)
+            {
+                Console.WriteLine("AggreagateException in WaitAndProcessAsync:");
+                Console.WriteLine(ex.InnerException.Message);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Exception in WaitAndProcessAsync:  {ex.Message}");
+            }
+        }
 
-                    if (_queue.TryDequeue(out item))
-                    {
-                        list.Add(item);
-                    }
-                    else
-                    {
-                        break;
-                    }
+        private async Task ProcessBatchAsync()
+        {
+            var sendTasks = new List<Task>();
+
+            //  Remove delayed batch process
+            Interlocked.Exchange(ref _currentBatchProcessId, null);
+
+            //  Process ALL items in queue
+            while (!_queue.IsEmpty)
+            {
+                var buffer = DequeueBuffer();
+
+                sendTasks.Add(SendBufferedBatchAsync(buffer));
+            }
+
+            await Task.WhenAll(sendTasks);
+        }
+
+        private async Task SendBufferedBatchAsync(object[] buffer)
+        {
+            if (buffer.Length > 0)
+            {
+                var client = _clientPool.GetClient();
+
+                await client.SendBatchAsync(buffer);
+                _clientPool.ReleaseClient(client);
+            }
+        }
+
+        private object[] DequeueBuffer()
+        {
+            var list = new List<object>();
+
+            while (list.Count < _batchSize)
+            {
+                object item;
+
+                if (_queue.TryDequeue(out item))
+                {
+                    list.Add(item);
                 }
-                _currentBufferingTokenSource = null;
+                else
+                {
+                    break;
+                }
             }
 
             return list.ToArray();
