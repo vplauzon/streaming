@@ -37,9 +37,13 @@ namespace ClientConsole
             new ConcurrentQueue<BufferedItem>();
         private CancellationTokenSource _currentBufferingTokenSource;
 
-        public BufferBatchEventHubClient(Func<IEventHubClient> clientFactory, int batchSize)
+        public BufferBatchEventHubClient(EventHubClientPool pool, int batchSize)
         {
-            _clientPool = new EventHubClientPool(clientFactory);
+            _clientPool = pool ?? throw new ArgumentNullException(nameof(pool));
+            if (batchSize <= 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(batchSize), "Must be greater than zero");
+            }
             _batchSize = batchSize;
         }
 

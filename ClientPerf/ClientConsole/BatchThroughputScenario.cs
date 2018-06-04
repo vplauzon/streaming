@@ -29,9 +29,8 @@ namespace ClientConsole
             int count = 0;
             var elapsed = await TimeFunctionAsync(async () =>
             {
-                Func<IEventHubClient> factory = () => CreateEventHubClient();
                 var proxyClient = new BufferBatchEventHubClient(
-                    factory,
+                    new EventHubClientPool(() => CreateEventHubClient()),
                     _batchSize) as IEventHubClient;
 
                 try
