@@ -97,14 +97,14 @@
       },
       {
         "protocol": "amqp",
-        "scenario": "batch-throughput",
+        "scenario": "batch-buffer-throughput",
         "batchSize": 50,
         "threadCount": 100,
         "samplingTime": "0:2:0"
       },
       {
         "protocol": "http",
-        "scenario": "batch-throughput",
+        "scenario": "batch-buffer-throughput",
         "batchSize": 50,
         "threadCount": 100,
         "samplingTime": "0:2:0"

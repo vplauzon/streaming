@@ -5,13 +5,13 @@ using System.Threading.Tasks;
 
 namespace ClientConsole
 {
-    public class BatchThroughputScenario : ScenarioBase
+    public class BatchBufferThroughputScenario : ScenarioBase
     {
         private readonly int _batchSize;
         private readonly int _threadCount;
         private readonly TimeSpan _samplingTime;
 
-        public BatchThroughputScenario(
+        public BatchBufferThroughputScenario(
             string connectionString,
             bool isAmqp,
             int batchSize,

@@ -40,8 +40,8 @@ namespace ClientConsole
                 case "batch-one-by-one-throughput":
                     new BatchOneByOneThroughputScenario(connectionString, isAmqp, threadCount, samplingTime).RunAsync().Wait();
                     break;
-                case "batch-throughput":
-                    new BatchThroughputScenario(connectionString, isAmqp, batchSize, threadCount, samplingTime).RunAsync().Wait();
+                case "batch-buffer-throughput":
+                    new BatchBufferThroughputScenario(connectionString, isAmqp, batchSize, threadCount, samplingTime).RunAsync().Wait();
                     break;
                 case "isolated-pool-throughput":
                     new IsolatedPoolThroughputScenario(connectionString, isAmqp, threadCount, samplingTime).RunAsync().Wait();
