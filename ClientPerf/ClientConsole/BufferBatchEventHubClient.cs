@@ -34,7 +34,7 @@ namespace ClientConsole
         {
             _queue.Enqueue(jsonPayload);
             EnsureDelayedBatchProcess();
-            if (_queue.Count > BACKOFF_RATIO * _batchSize)
+            while (_queue.Count > BACKOFF_RATIO * _batchSize)
             {   //  Too many elements in the queue
                 //  Let's back off the producers
                 await Task.Delay(BACKOFF_DELAY);
