@@ -42,14 +42,14 @@
       {
         "protocol": "amqp",
         "scenario": "batch-one-by-one-perf",
-        "batchSize": 1000,
+        "batchSize": 50,
         "threadCount": 0,
         "samplingTime": "0:0:0"
       },
       {
         "protocol": "http",
         "scenario": "batch-one-by-one-perf",
-        "batchSize": 1000,
+        "batchSize": 50,
         "threadCount": 0,
         "samplingTime": "0:0:0"
       },
@@ -98,14 +98,14 @@
       {
         "protocol": "amqp",
         "scenario": "batch-throughput",
-        "batchSize": 0,
+        "batchSize": 50,
         "threadCount": 100,
         "samplingTime": "0:2:0"
       },
       {
         "protocol": "http",
         "scenario": "batch-throughput",
-        "batchSize": 0,
+        "batchSize": 50,
         "threadCount": 100,
         "samplingTime": "0:2:0"
       },
@@ -136,7 +136,7 @@
       "sku": {
         "name": "Standard",
         "tier": "Standard",
-        "capacity": 1
+        "capacity": 6
       },
       "properties": {
         "isAutoInflateEnabled": false,
