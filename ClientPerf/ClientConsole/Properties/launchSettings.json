@@ -3,12 +3,13 @@
     "ClientConsole": {
       "commandName": "Project",
       "environmentVariables": {
-        "CONNECTION_STRING": "Endpoint=sb://eh-zw5aasrleahgi.servicebus.windows.net/;SharedAccessKeyName=sendRule;SharedAccessKey=1YgKsoBZFQUFRic2tHBH0fvn2sEHXndfGDtsgW2BYmE=;EntityPath=test-hub",
+        "CONNECTION_STRING": "Endpoint=sb://eh-wt3avpa3sbuyk.servicebus.windows.net/;SharedAccessKeyName=sendRule;SharedAccessKey=KNcjcAwB6x+45VgLihLbIXs1BPgX3eBdBY0qsUkG1CE=;EntityPath=test-hub",
         "SCENARIO": "batch-buffer-throughput",
         "PROTOCOL": "http",
         "BATCH_SIZE": "50",
         "THREAD_COUNT": "10",
-        "SAMPLING_TIME": "0:0:10"
+        "SAMPLING_TIME": "0:0:10",
+        "DELAY_START": "0:0:30"
       }
     }
   }

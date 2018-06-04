@@ -14,6 +14,7 @@ namespace ClientConsole
             var batchSize = ParseInt(Environment.GetEnvironmentVariable("BATCH_SIZE"));
             var threadCount = ParseInt(Environment.GetEnvironmentVariable("THREAD_COUNT"));
             var samplingTime = ParseTimeSpan(Environment.GetEnvironmentVariable("SAMPLING_TIME"));
+            var delayStart = ParseTimeSpan(Environment.GetEnvironmentVariable("DELAY_START"));
 
             Console.WriteLine($"Connection String:  {connectionString}");
             Console.WriteLine($"Scenario:  {scenario}");
@@ -21,6 +22,11 @@ namespace ClientConsole
             Console.WriteLine($"Batch Size:  {batchSize}");
             Console.WriteLine($"Thread Count:  {threadCount}");
             Console.WriteLine($"Sampling Time:  {samplingTime}");
+            Console.WriteLine($"Delay Start:  {delayStart}");
+            Console.WriteLine();
+
+            Task.Delay(delayStart).Wait();
+            Console.WriteLine("Starting");
             Console.WriteLine();
 
             switch (scenario.ToLower())
