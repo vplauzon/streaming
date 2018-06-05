@@ -51,7 +51,7 @@ namespace ClientConsole
         private async Task<int> OneThreadAsync(EventHubClientPool pool, CancellationToken cancellationToken)
         {
             int eventCount = 0;
-            var client = pool.GetClient();
+            var client = pool.AcquireClient();
 
             try
             {

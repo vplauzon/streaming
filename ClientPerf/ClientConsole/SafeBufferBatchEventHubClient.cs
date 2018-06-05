@@ -109,7 +109,7 @@ namespace ClientConsole
         {
             if (buffer.Length > 0)
             {
-                var client = _clientPool.GetClient();
+                var client = _clientPool.AcquireClient();
                 var payloads = from i in buffer
                                select i.Payload;
 

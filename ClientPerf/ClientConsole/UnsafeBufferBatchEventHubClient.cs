@@ -43,7 +43,7 @@ namespace ClientConsole
 
         async Task IEventHubClient.SendBatchAsync(IEnumerable<object> batch)
         {
-            var client = _clientPool.GetClient();
+            var client = _clientPool.AcquireClient();
 
             try
             {
@@ -121,7 +121,7 @@ namespace ClientConsole
         {
             if (buffer.Length > 0)
             {
-                var client = _clientPool.GetClient();
+                var client = _clientPool.AcquireClient();
 
                 await client.SendBatchAsync(buffer);
                 _clientPool.ReleaseClient(client);
