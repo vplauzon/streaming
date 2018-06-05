@@ -70,32 +70,37 @@
           "scenario": "isolated-throughput"
         },
         {
-          "delayStart": "0:5:0",
+          "delayStart": "0::0",
           "protocol": "amqp",
-          "scenario": "isolated-pool-throughput"
+          "scenario": "pool-late-release-throughput"
         },
         {
           "delayStart": "0:7:30",
           "protocol": "http",
-          "scenario": "isolated-pool-throughput"
+          "scenario": "pool-late-release-throughput"
         },
         {
           "delayStart": "0:10:0",
           "protocol": "amqp",
-          "scenario": "safe-batch-buffer-throughput"
+          "scenario": "pool-early-release-throughput"
         },
         {
           "delayStart": "0:12:30",
-          "protocol": "http",
+          "protocol": "amqp",
           "scenario": "safe-batch-buffer-throughput"
         },
         {
           "delayStart": "0:15:0",
+          "protocol": "http",
+          "scenario": "safe-batch-buffer-throughput"
+        },
+        {
+          "delayStart": "0:17:30",
           "protocol": "amqp",
           "scenario": "unsafe-batch-buffer-throughput"
         },
         {
-          "delayStart": "0:17:30",
+          "delayStart": "0:20:0",
           "protocol": "http",
           "scenario": "unsafe-batch-buffer-throughput"
         }
