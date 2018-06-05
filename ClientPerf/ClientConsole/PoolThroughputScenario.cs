@@ -5,16 +5,23 @@ using System.Threading.Tasks;
 
 namespace ClientConsole
 {
-    public class IsolatedPoolThroughputScenario : ScenarioBase
+    public class PoolThroughputScenario : ScenarioBase
     {
         private readonly int _threadCount;
         private readonly TimeSpan _samplingTime;
+        private readonly bool _earlyConnectionRelease;
 
-        public IsolatedPoolThroughputScenario(string connectionString, bool isAmqp, int threadCount, TimeSpan samplingTime)
+        public PoolThroughputScenario(
+            string connectionString,
+            bool isAmqp,
+            int threadCount,
+            TimeSpan samplingTime,
+            bool earlyConnectionRelease)
             : base(connectionString, isAmqp)
         {
             _threadCount = threadCount;
             _samplingTime = samplingTime;
+            _earlyConnectionRelease = earlyConnectionRelease;
         }
 
         public override async Task RunAsync()
@@ -41,6 +48,7 @@ namespace ClientConsole
                 Console.WriteLine($"Total Events:  {count}");
                 Console.WriteLine($"Duration:  {elapsed}");
                 Console.WriteLine($"Throughput:  {(double)count / elapsed.TotalSeconds}");
+                Console.WriteLine($"Connection Pool size:  {pool.PoolSize}");
             }
             finally
             {
@@ -51,22 +59,26 @@ namespace ClientConsole
         private async Task<int> OneThreadAsync(EventHubClientPool pool, CancellationToken cancellationToken)
         {
             int eventCount = 0;
-            var client = pool.AcquireClient();
 
-            try
+            while (!cancellationToken.IsCancellationRequested)
             {
-                while (!cancellationToken.IsCancellationRequested)
+                var client = pool.AcquireClient();
+                var sendTask = client.SendAsync(GetDummyEventObject());
+
+                if (_earlyConnectionRelease)
                 {
-                    await client.SendAsync(GetDummyEventObject());
-                    ++eventCount;
+                    pool.ReleaseClient(client);
+                    await sendTask;
                 }
+                else
+                {
+                    await sendTask;
+                    pool.ReleaseClient(client);
+                }
+                ++eventCount;
+            }
 
-                return eventCount;
-            }
-            finally
-            {
-                pool.ReleaseClient(client);
-            }
+            return eventCount;
         }
     }
 }

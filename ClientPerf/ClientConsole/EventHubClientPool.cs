@@ -18,6 +18,8 @@ namespace ClientConsole
             _clientFactory = clientFactory ?? throw new ArgumentNullException(nameof(clientFactory));
         }
 
+        public int PoolSize { get { return _queue.Count; } }
+
         public IEventHubClient AcquireClient()
         {
             IEventHubClient client;
