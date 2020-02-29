@@ -1,0 +1,88 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+  },
+  "variables": {
+    "Unique ID": "[uniqueString(concat(resourceGroup().id, 'iot'))]",
+    "Hub Name": "[concat('iot-hub-', variables('Unique ID'))]",
+    "App Insights Name": "[concat('app-insights-', variables('Unique ID'))]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Devices/IotHubs",
+      "apiVersion": "2019-11-04",
+      "name": "[variables('Hub Name')]",
+      "location": "[resourceGroup().location]",
+      "sku": {
+        "name": "S1",
+        "tier": "Standard",
+        "capacity": 1
+      },
+      "properties": {
+        "ipFilterRules": [
+        ],
+        "eventHubEndpoints": {
+          "events": {
+            "retentionTimeInDays": 1,
+            "partitionCount": 32
+          }
+        },
+        "routing": {
+          "endpoints": {
+            "serviceBusQueues": [
+            ],
+            "serviceBusTopics": [
+            ],
+            "eventHubs": [
+            ],
+            "storageContainers": [
+            ]
+          },
+          "routes": [
+          ],
+          "fallbackRoute": {
+            "name": "$fallback",
+            "source": "DeviceMessages",
+            "condition": "true",
+            "endpointNames": [
+              "events"
+            ],
+            "isEnabled": true
+          }
+        },
+        "storageEndpoints": {
+        },
+        "messagingEndpoints": {
+        },
+        "enableFileUploadNotifications": false,
+        "cloudToDevice": {
+          "maxDeliveryCount": 10,
+          "defaultTtlAsIso8601": "PT1H",
+          "feedback": {
+            "lockDurationAsIso8601": "PT1M",
+            "ttlAsIso8601": "PT1H",
+            "maxDeliveryCount": 10
+          }
+        },
+        "features": "None"
+      }
+    },
+    {
+      "type": "Microsoft.Insights/components",
+      "name": "[variables('App Insights Name')]",
+      "apiVersion": "2015-05-01",
+      "location": "[resourceGroup().location]",
+      "tags": {
+      },
+      "kind": "web",
+      "properties": {
+        "Application_Type": "web"
+      },
+      "dependsOn": [
+      ]
+    }
+  ],
+  "outputs": {
+  }
+}
