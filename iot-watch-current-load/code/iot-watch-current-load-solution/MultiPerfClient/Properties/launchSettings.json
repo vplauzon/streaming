@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "MultiPerfClient": {
+      "commandName": "Project",
+      "environmentVariables": {
+        "MODE": "Value"
+      }
+    }
+  }
+}
