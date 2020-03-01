@@ -14,6 +14,9 @@
       "apiVersion": "2019-11-04",
       "name": "[variables('Hub Name')]",
       "location": "[resourceGroup().location]",
+      "tags": {
+        "uniqueId":"[variables('Unique ID')]"
+      },
       "sku": {
         "name": "S1",
         "tier": "Standard",
