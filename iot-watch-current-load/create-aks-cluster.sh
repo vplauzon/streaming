@@ -8,7 +8,8 @@
 ##  1- Name of resource group
 
 rg=$1
-kv="1.15.5"
+
+kv="1.15.7"
 
 echo "Resource group:  $rg"
 

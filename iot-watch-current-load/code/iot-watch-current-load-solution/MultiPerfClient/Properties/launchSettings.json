@@ -3,7 +3,7 @@
     "MultiPerfClient": {
       "commandName": "Project",
       "environmentVariables": {
-        "MODE": "Value"
+        "MODE": "hub-feeder"
       }
     }
   }

@@ -6,6 +6,7 @@
   "variables": {
     "Unique ID": "[uniqueString(concat(resourceGroup().id, 'iot'))]",
     "Hub Name": "[concat('iot-hub-', variables('Unique ID'))]",
+    "Provision Service Name": "[concat('iot-provision-service-', variables('Unique ID'))]",
     "App Insights Name": "[concat('app-insights-', variables('Unique ID'))]"
   },
   "resources": [
@@ -15,7 +16,7 @@
       "name": "[variables('Hub Name')]",
       "location": "[resourceGroup().location]",
       "tags": {
-        "uniqueId":"[variables('Unique ID')]"
+        "uniqueId": "[variables('Unique ID')]"
       },
       "sku": {
         "name": "S1",
@@ -69,6 +70,30 @@
           }
         },
         "features": "None"
+      }
+    },
+    {
+      "type": "Microsoft.Devices/provisioningServices",
+      "apiVersion": "2018-01-22",
+      "name": "[variables('Provision Service Name')]",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Devices/IotHubs', variables('Hub Name'))]"
+      ],
+      "sku": {
+        "name": "S1",
+        "tier": "Standard",
+        "capacity": 1
+      },
+      "properties": {
+        "state": "Active",
+        "iotHubs": [
+          {
+            "connectionString": "[concat('HostName=', reference(resourceId('Microsoft.Devices/IoTHubs', variables('Hub Name')), providers('Microsoft.Devices', 'IoTHubs').apiVersions[0]).hostName, ';SharedAccessKeyName=iothubowner;SharedAccessKey=', listKeys(resourceId('Microsoft.Devices/IotHubs', variables('Hub Name')), providers('Microsoft.Devices', 'IoTHubs').apiVersions[0]).value[0].primaryKey)]",
+            "location": "[resourceGroup().location]"
+          }
+        ],
+        "allocationPolicy": "Hashed"
       }
     },
     {
