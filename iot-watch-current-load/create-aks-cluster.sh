@@ -8,6 +8,7 @@
 ##  1- Name of resource group
 
 rg=$1
+kv="1.15.5"
 
 echo "Resource group:  $rg"
 
@@ -32,8 +33,20 @@ az aks create \
     -g $rg \
     -n $clusterName \
     --node-count 1 \
+    --min-count 1 \
+    --max-count 25 \
     --generate-ssh-keys \
-    --nodepool-name hub-feeder \
-    --enable-cluster-autoscaler true \
+    --nodepool-name feeder \
+    --enable-cluster-autoscaler \
     --enable-vmss \
-    
+    --kubernetes-version $kv
+
+echo
+echo "Add node pool"
+
+az aks nodepool add \
+    -g $rg \
+    --cluster-name $clusterName \
+    --name peeker \
+    --node-count 1 \
+    --kubernetes-version $kv
