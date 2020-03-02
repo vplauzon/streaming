@@ -1,23 +1,21 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
 
-namespace MultiPerfClient
+namespace MultiPerfClient.Hub
 {
     internal class HubFeederConfiguration
     {
         public HubFeederConfiguration()
         {
+            var connectionString = Environment.GetEnvironmentVariable("IOT_CONN_STRING");
             var deviceCountText = Environment.GetEnvironmentVariable("DEVICE_COUNT");
             int deviceCount;
-            var messagesPerHourText = Environment.GetEnvironmentVariable("MESSAGES_PER_HOUR");
-            int messagesPerHour;
+            var batchesPerHourText = Environment.GetEnvironmentVariable("BATCHES_PER_HOUR");
+            int batchesPerHour;
             var messageSizeText = Environment.GetEnvironmentVariable("MESSAGE_SIZE_IN_KB");
             int messageSize;
 
-            ConnectionString = Environment.GetEnvironmentVariable("IOT_CONN_STRING");
-
-            if (string.IsNullOrWhiteSpace(ConnectionString))
+            if (string.IsNullOrWhiteSpace(connectionString))
             {
                 throw new ArgumentNullException("Env Var 'IOT_CONN_STRING' not set", "IOT_CONN_STRING");
             }
@@ -29,13 +27,13 @@ namespace MultiPerfClient
             {
                 throw new ArgumentException("Env Var 'DEVICE_COUNT' isn't an integer", "DEVICE_COUNT");
             }
-            else if (string.IsNullOrWhiteSpace(messagesPerHourText))
+            else if (string.IsNullOrWhiteSpace(batchesPerHourText))
             {
-                throw new ArgumentNullException("Env Var 'MESSAGES_PER_HOUR' not set", "MESSAGES_PER_HOUR");
+                throw new ArgumentNullException("Env Var 'BATCHES_PER_HOUR' not set", "BATCHES_PER_HOUR");
             }
-            else if (!int.TryParse(messagesPerHourText, out messagesPerHour))
+            else if (!int.TryParse(batchesPerHourText, out batchesPerHour))
             {
-                throw new ArgumentException("Env Var 'MESSAGES_PER_HOUR' isn't an integer", "MESSAGES_PER_HOUR");
+                throw new ArgumentException("Env Var 'BATCHES_PER_HOUR' isn't an integer", "BATCHES_PER_HOUR");
             }
             else if (string.IsNullOrWhiteSpace(messageSizeText))
             {
@@ -45,8 +43,9 @@ namespace MultiPerfClient
             {
                 throw new ArgumentException("Env Var 'MESSAGE_SIZE_IN_KB' isn't an integer", "MESSAGE_SIZE_IN_KB");
             }
+            ConnectionString = connectionString;
             DeviceCount = deviceCount;
-            MessagesPerHour = messagesPerHour;
+            BatchesPerHour = batchesPerHour;
             MessageSize = messageSize;
         }
 
@@ -54,7 +53,7 @@ namespace MultiPerfClient
 
         public int DeviceCount { get; }
 
-        public int MessagesPerHour { get; }
+        public int BatchesPerHour { get; }
 
         public int MessageSize { get; }
     }

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using MultiPerfClient.Hub;
+using System;
 using System.Threading.Tasks;
 
 namespace MultiPerfClient
@@ -15,8 +16,16 @@ namespace MultiPerfClient
             {
                 case "hub-feeder":
                     var feeder = new HubFeeder();
+                    var task = feeder.RunAsync();
 
-                    await feeder.RunAsync();
+                    AppDomain.CurrentDomain.ProcessExit += async (object? sender, EventArgs e) =>
+                    {
+                        feeder.Stop();
+
+                        await task;
+                    };
+
+                    await task;
 
                     return;
 
@@ -28,7 +37,7 @@ namespace MultiPerfClient
                     {
                         Console.WriteLine($"Mode '{mode}' isn't supported");
                     }
-                    
+
                     return;
             }
         }
