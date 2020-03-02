@@ -17,28 +17,57 @@ namespace MultiPerfClient.Hub
     /// </summary>
     internal class HubFeeder
     {
-        private static readonly TimeSpan METRIC_WINDOW = TimeSpan.FromMinutes(1);
+        private static readonly TimeSpan METRIC_WINDOW = TimeSpan.FromSeconds(60);
 
         private readonly CancellationTokenSource _cancellationTokenSource = new CancellationTokenSource();
         private readonly HubFeederConfiguration _configuration = new HubFeederConfiguration();
-        private readonly TelemetryClient _telemetryClient = new TelemetryClient();
+        private readonly TelemetryClient _telemetryClient;
         private readonly Random _random = new Random();
+
+        public HubFeeder(TelemetryClient telemetryClient)
+        {
+            _telemetryClient = telemetryClient;
+        }
 
         public async Task RunAsync()
         {
             Console.WriteLine("Hub Feeder");
             Console.WriteLine($"Register {_configuration.DeviceCount} devices...");
 
-            var devices = await RegisterDevicesAsync();
-            var clients = (from d in devices
-                           select DeviceClient.CreateFromConnectionString(
-                               _configuration.ConnectionString,
-                               d.Id)).ToArray();
+            try
+            {
+                var devices = await RegisterDevicesAsync();
+                var clients = (from d in devices
+                               select DeviceClient.CreateFromConnectionString(
+                                   _configuration.ConnectionString,
+                                   d.Id)).ToArray();
+
+                Console.WriteLine("Looping for messages...");
+
+                await LoopMessagesAsync(clients);
+            }
+            catch (Exception ex)
+            {
+                _telemetryClient.TrackException(ex);
+                throw;
+            }
+            finally
+            {
+                _telemetryClient.Flush();
+            }
+        }
+
+        public void Stop()
+        {
+            _cancellationTokenSource.Cancel();
+        }
+
+        private async Task LoopMessagesAsync(DeviceClient[] clients)
+        {
             var betweenMessages = TimeSpan.FromMinutes(60) / _configuration.BatchesPerHour;
             var metricWatch = new Stopwatch();
             var messageCount = 0;
 
-            Console.WriteLine("Looping for messages...");
             metricWatch.Start();
             while (!_cancellationTokenSource.IsCancellationRequested)
             {
@@ -57,26 +86,21 @@ namespace MultiPerfClient.Hub
                 }
                 if (metricWatch.Elapsed >= METRIC_WINDOW)
                 {
-                    _telemetryClient.TrackEvent(
-                        "message-metric",
-                        null,
-                        new Dictionary<string, double>()
+                    Console.WriteLine("Writing metrics");
+                    _telemetryClient.TrackMetric(
+                        "message-throughput-per-minute",
+                        messageCount / metricWatch.Elapsed.TotalSeconds * 60,
+                        new Dictionary<string, string>()
                         {
-                            { "throughputPerMinute", messageCount / metricWatch.Elapsed.TotalSeconds * 60 },
-                            { "batchesPerHour", _configuration.BatchesPerHour },
-                            { "deviceCount", _configuration.DeviceCount },
-                            { "messageSize", _configuration.MessageSize }
+                            { "batchesPerHour", _configuration.BatchesPerHour.ToString() },
+                            { "deviceCount", _configuration.DeviceCount.ToString() },
+                            { "messageSize", _configuration.MessageSize.ToString() }
                         });
                     //  Reset metrics
                     metricWatch.Restart();
                     messageCount = 0;
                 }
             }
-        }
-
-        public void Stop()
-        {
-            _cancellationTokenSource.Cancel();
         }
 
         private async Task<int> SendingMessagesAsync(DeviceClient[] clients)

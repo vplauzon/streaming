@@ -1,4 +1,5 @@
 ﻿using AppInsights.TelemetryInitializers;
+using Microsoft.ApplicationInsights;
 using Microsoft.ApplicationInsights.Extensibility;
 using MultiPerfClient.Hub;
 using System;
@@ -17,9 +18,7 @@ namespace MultiPerfClient
             switch (mode?.Trim())
             {
                 case "hub-feeder":
-                    InitAppInsights("HUB-FEEDER");
-
-                    var feeder = new HubFeeder();
+                    var feeder = new HubFeeder(InitAppInsights("HUB-FEEDER"));
                     var task = feeder.RunAsync();
 
                     AppDomain.CurrentDomain.ProcessExit += async (object? sender, EventArgs e) =>
@@ -46,7 +45,7 @@ namespace MultiPerfClient
             }
         }
 
-        private static void InitAppInsights(string roleName)
+        private static TelemetryClient InitAppInsights(string roleName)
         {
             var appInsightsKey = Environment.GetEnvironmentVariable("APP_INSIGHTS_KEY");
 
@@ -63,6 +62,8 @@ namespace MultiPerfClient
             //  Customize App Insights role name
             configuration.TelemetryInitializers.Add(
                 new RoleNameInitializer(roleName));
+
+            return new TelemetryClient(configuration);
         }
     }
 }
