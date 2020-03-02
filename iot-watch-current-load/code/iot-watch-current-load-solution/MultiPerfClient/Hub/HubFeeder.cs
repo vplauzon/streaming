@@ -146,8 +146,10 @@ namespace MultiPerfClient.Hub
         {
             var registryManager = RegistryManager.CreateFromConnectionString(
                 _configuration.ConnectionString);
+            var uniqueCode = Guid.NewGuid().GetHashCode().ToString("x8");
             var tasks = (from i in Enumerable.Range(0, _configuration.DeviceCount)
-                         select RegisterDeviceAsync(registryManager, i)).ToArray();
+                         let id = $"{Environment.MachineName}.{uniqueCode}.{i}"
+                         select RegisterDeviceAsync(registryManager, id)).ToArray();
 
             await Task.WhenAll(tasks);
 
@@ -157,9 +159,9 @@ namespace MultiPerfClient.Hub
             return devices.ToArray();
         }
 
-        private async Task<Device> RegisterDeviceAsync(RegistryManager registryManager, int index)
+        private async Task<Device> RegisterDeviceAsync(RegistryManager registryManager, string id)
         {
-            var device = new Device(Environment.MachineName + "." + index)
+            var device = new Device(id)
             {
                 Authentication = new AuthenticationMechanism
                 {
