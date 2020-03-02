@@ -10,8 +10,8 @@ namespace MultiPerfClient.Hub
             var connectionString = Environment.GetEnvironmentVariable("IOT_CONN_STRING");
             var deviceCountText = Environment.GetEnvironmentVariable("DEVICE_COUNT");
             int deviceCount;
-            var batchesPerHourText = Environment.GetEnvironmentVariable("BATCHES_PER_HOUR");
-            int batchesPerHour;
+            var messagesPerMinuteText = Environment.GetEnvironmentVariable("MESSAGES_PER_MINUTE");
+            int messagesPerMinute;
             var messageSizeText = Environment.GetEnvironmentVariable("MESSAGE_SIZE_IN_KB");
             int messageSize;
 
@@ -27,13 +27,13 @@ namespace MultiPerfClient.Hub
             {
                 throw new ArgumentException("Env Var isn't an integer", "DEVICE_COUNT");
             }
-            else if (string.IsNullOrWhiteSpace(batchesPerHourText))
+            else if (string.IsNullOrWhiteSpace(messagesPerMinuteText))
             {
-                throw new ArgumentNullException("Environment variable missing", "BATCHES_PER_HOUR");
+                throw new ArgumentNullException("Environment variable missing", "MESSAGES_PER_MINUTE");
             }
-            else if (!int.TryParse(batchesPerHourText, out batchesPerHour))
+            else if (!int.TryParse(messagesPerMinuteText, out messagesPerMinute))
             {
-                throw new ArgumentException("Env Var isn't an integer", "BATCHES_PER_HOUR");
+                throw new ArgumentException("Env Var isn't an integer", "MESSAGES_PER_MINUTE");
             }
             else if (string.IsNullOrWhiteSpace(messageSizeText))
             {
@@ -45,7 +45,7 @@ namespace MultiPerfClient.Hub
             }
             ConnectionString = connectionString;
             DeviceCount = deviceCount;
-            BatchesPerHour = batchesPerHour;
+            MessagesPerMinute = messagesPerMinute;
             MessageSize = messageSize;
         }
 
@@ -53,7 +53,7 @@ namespace MultiPerfClient.Hub
 
         public int DeviceCount { get; }
 
-        public int BatchesPerHour { get; }
+        public int MessagesPerMinute { get; }
 
         public int MessageSize { get; }
     }

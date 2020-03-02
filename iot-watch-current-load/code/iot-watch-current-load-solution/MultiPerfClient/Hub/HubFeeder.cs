@@ -64,41 +64,43 @@ namespace MultiPerfClient.Hub
 
         private async Task LoopMessagesAsync(DeviceClient[] clients)
         {
-            var betweenMessages = TimeSpan.FromMinutes(60) / _configuration.BatchesPerHour;
+            var delayWatch = new Stopwatch();
             var metricWatch = new Stopwatch();
-            var messageCount = 0;
+            var delayMessageCount = 0;
+            var metricMessageCount = 0;
 
+            delayWatch.Start();
             metricWatch.Start();
             while (!_cancellationTokenSource.IsCancellationRequested)
             {
-                var delayWatch = new Stopwatch();
+                var messageCount = await SendingMessagesAsync(clients);
 
-                delayWatch.Start();
-                messageCount += await SendingMessagesAsync(clients);
-
-                var pause = betweenMessages - delayWatch.Elapsed;
-
-                if (pause > TimeSpan.Zero)
+                delayMessageCount += messageCount;
+                metricMessageCount += messageCount;
+                if (delayMessageCount >= _configuration.MessagesPerMinute)
                 {
-                    Console.WriteLine($"Pausing between 2 batches:  {pause}...");
+                    var pause = TimeSpan.FromMinutes(1) - delayWatch.Elapsed;
 
+                    Console.WriteLine($"Pausing before next minute:  {pause}...");
                     await Task.Delay(pause);
+                    delayWatch.Restart();
+                    delayMessageCount = 0;
                 }
                 if (metricWatch.Elapsed >= METRIC_WINDOW)
                 {
                     Console.WriteLine("Writing metrics");
                     _telemetryClient.TrackMetric(
                         "message-throughput-per-minute",
-                        messageCount / metricWatch.Elapsed.TotalSeconds * 60,
+                        metricMessageCount / metricWatch.Elapsed.TotalSeconds * 60,
                         new Dictionary<string, string>()
                         {
-                            { "batchesPerHour", _configuration.BatchesPerHour.ToString() },
+                            { "batchesPerHour", _configuration.MessagesPerMinute.ToString() },
                             { "deviceCount", _configuration.DeviceCount.ToString() },
                             { "messageSize", _configuration.MessageSize.ToString() }
                         });
                     //  Reset metrics
                     metricWatch.Restart();
-                    messageCount = 0;
+                    metricMessageCount = 0;
                 }
             }
         }
@@ -107,7 +109,7 @@ namespace MultiPerfClient.Hub
         {
             var messageCount = 0;
 
-            Console.WriteLine("Sending message batch...");
+            Console.WriteLine($"Sending 1 message to each {clients.Length} devices...");
             foreach (var client in clients)
             {
                 using (var stream = new MemoryStream())

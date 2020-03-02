@@ -6,3 +6,4 @@ We are comparing two data services:  Azure Cosmos DB & Azure Data Explorer.
 
 Register devices:  https://docs.microsoft.com/en-us/azure/iot-hub/iot-hub-devguide-security#c-support
 Sending telemetry:  https://docs.microsoft.com/en-us/azure/iot-hub/quickstart-send-telemetry-dotnet#send-simulated-telemetry
+
