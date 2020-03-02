@@ -41,14 +41,14 @@ stages:
       displayName: Create Version File
       inputs:
         targetType: 'filePath'
-        filePath: $(sub-folder)/scripts/create-version-file.sh
-        arguments: $(tag) $(sub-folder)/container-content/version.txt
+        filePath: $(sub-folder)/cicd/scripts/create-version-file.sh
+        arguments: $(tag) $(sub-folder)/cicd/container-content/version.txt
     - task: Docker@2
       displayName: Build image
       inputs:
         repository: '$(image-name)'
         command: 'build'
-        Dockerfile: '$(sub-folder)/Dockerfile'
+        Dockerfile: '$(sub-folder)/cicd/Dockerfile'
         tags: '$(tag)'
     - task: Docker@2
       displayName: Push image
