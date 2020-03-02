@@ -1,12 +1,19 @@
 # Help:  https://aka.ms/yaml
 
 trigger:
-- master
+  branches:
+    include:
+    - master
+  paths:
+    include:
+    - iot-watch-current-load/*
+pr: none
 
 resources:
 - repo: self
 
 variables:
+  sub-folder:  iot-watch-current-load
   mainVersion: '0.1'
   tag: '$(mainVersion).$(Build.BuildId)'
   image-name:  vplauzon/perf-streaming
@@ -21,18 +28,27 @@ stages:
     pool:
       vmImage: 'ubuntu-latest'
     steps:
+    # Publish the function project
+    - task: DotNetCoreCLI@2
+      displayName: 'dotnet publish'
+      inputs:
+        command: build
+        publishWebProjects: false
+        projects: '$(sub-folder)/**/*.csproj'
+        arguments: '-o $(sub-folder)/bin'
+        modifyOutputPath: true
     - task: Bash@3
       displayName: Create Version File
       inputs:
         targetType: 'filePath'
-        filePath: scripts/create-version-file.sh
-        arguments: $(tag) container-content/version.txt
+        filePath: $(sub-folder)/scripts/create-version-file.sh
+        arguments: $(tag) $(sub-folder)/container-content/version.txt
     - task: Docker@2
       displayName: Build image
       inputs:
         repository: '$(image-name)'
         command: 'build'
-        Dockerfile: '**/Dockerfile'
+        Dockerfile: '$(sub-folder)/Dockerfile'
         tags: '$(tag)'
     - task: Docker@2
       displayName: Push image
