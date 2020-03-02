@@ -1,6 +1,8 @@
-﻿using Microsoft.Azure.Devices;
+﻿using Microsoft.ApplicationInsights;
+using Microsoft.Azure.Devices;
 using Microsoft.Azure.Devices.Client;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -15,8 +17,11 @@ namespace MultiPerfClient.Hub
     /// </summary>
     internal class HubFeeder
     {
+        private static readonly TimeSpan METRIC_WINDOW = TimeSpan.FromMinutes(1);
+
         private readonly CancellationTokenSource _cancellationTokenSource = new CancellationTokenSource();
         private readonly HubFeederConfiguration _configuration = new HubFeederConfiguration();
+        private readonly TelemetryClient _telemetryClient = new TelemetryClient();
         private readonly Random _random = new Random();
 
         public async Task RunAsync()
@@ -30,22 +35,38 @@ namespace MultiPerfClient.Hub
                                _configuration.ConnectionString,
                                d.Id)).ToArray();
             var betweenMessages = TimeSpan.FromMinutes(60) / _configuration.BatchesPerHour;
+            var metricWatch = new Stopwatch();
+            var messageCount = 0;
 
             Console.WriteLine("Looping for messages...");
+            metricWatch.Start();
             while (!_cancellationTokenSource.IsCancellationRequested)
             {
-                var watch = new Stopwatch();
+                var delayWatch = new Stopwatch();
 
-                watch.Start();
-                await SendingMessagesAsync(clients);
+                delayWatch.Start();
+                messageCount += await SendingMessagesAsync(clients);
 
-                var pause = betweenMessages - watch.Elapsed;
+                var pause = betweenMessages - delayWatch.Elapsed;
 
                 if (pause > TimeSpan.Zero)
                 {
                     Console.WriteLine($"Pausing between 2 batches:  {pause}...");
 
                     await Task.Delay(pause);
+                }
+                if (metricWatch.Elapsed >= METRIC_WINDOW)
+                {
+                    _telemetryClient.TrackEvent(
+                        "message-metric",
+                        null,
+                        new Dictionary<string, double>()
+                        {
+                            { "messagesPerMinute", messageCount / metricWatch.Elapsed.TotalSeconds * 60 }
+                        });
+                    //  Reset metrics
+                    metricWatch.Restart();
+                    messageCount = 0;
                 }
             }
         }
@@ -55,8 +76,10 @@ namespace MultiPerfClient.Hub
             _cancellationTokenSource.Cancel();
         }
 
-        private async Task SendingMessagesAsync(DeviceClient[] clients)
+        private async Task<int> SendingMessagesAsync(DeviceClient[] clients)
         {
+            var messageCount = 0;
+
             Console.WriteLine("Sending message batch...");
             foreach (var client in clients)
             {
@@ -75,9 +98,19 @@ namespace MultiPerfClient.Hub
 
                     var message = new Microsoft.Azure.Devices.Client.Message(writer.BaseStream);
 
-                    await client.SendEventAsync(message);
+                    try
+                    {
+                        await client.SendEventAsync(message);
+                        ++messageCount;
+                    }
+                    catch(Exception ex)
+                    {
+                        _telemetryClient.TrackException(ex);
+                    }
                 }
             }
+
+            return messageCount;
         }
 
         private async Task<Device[]> RegisterDevicesAsync()

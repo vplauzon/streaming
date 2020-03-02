@@ -5,3 +5,4 @@ This is a load test to simulate a bunch of devices pushing telemetry to Azure Io
 We are comparing two data services:  Azure Cosmos DB & Azure Data Explorer.
 
 Register devices:  https://docs.microsoft.com/en-us/azure/iot-hub/iot-hub-devguide-security#c-support
+Sending telemetry:  https://docs.microsoft.com/en-us/azure/iot-hub/quickstart-send-telemetry-dotnet#send-simulated-telemetry
