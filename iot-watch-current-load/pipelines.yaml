@@ -30,7 +30,7 @@ stages:
     steps:
     # Publish the function project
     - task: DotNetCoreCLI@2
-      displayName: 'dotnet publish'
+      displayName: 'dotnet build'
       inputs:
         command: build
         publishWebProjects: false
