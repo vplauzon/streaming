@@ -33,6 +33,8 @@ namespace MultiPerfClient
             }
             else
             {
+                Console.WriteLine($"Register {deviceCount} devices...");
+
                 await RegisterDevicesAsync(connectionString, deviceCount);
             }
         }
@@ -48,7 +50,7 @@ namespace MultiPerfClient
 
         private async static Task RegisterDeviceAsync(RegistryManager registryManager, int index)
         {
-            var device = new Device("mydev" + index)
+            var device = new Device(Environment.MachineName + "." + index)
             {
                 Authentication = new AuthenticationMechanism
                 {
