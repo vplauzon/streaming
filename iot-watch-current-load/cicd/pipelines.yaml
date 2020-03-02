@@ -35,7 +35,7 @@ stages:
         command: build
         publishWebProjects: false
         projects: '$(sub-folder)/**/*.csproj'
-        arguments: '-o $(sub-folder)/bin'
+        arguments: '-o $(sub-folder)/cicd/bin'
         modifyOutputPath: true
     # - task: Bash@3
     #   displayName: Create Version File
