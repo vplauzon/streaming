@@ -1,0 +1,64 @@
+# Help:  https://aka.ms/yaml
+
+trigger:
+- master
+
+resources:
+- repo: self
+
+variables:
+  mainVersion: '0.1'
+  tag: '$(mainVersion).$(Build.BuildId)'
+  image-name:  vplauzon/perf-streaming
+  docker-registry-endpoint:  'vplauzon-docker-hub'
+
+stages:
+- stage: Build
+  displayName: Build image
+  jobs:
+  - job: Build
+    displayName: Build
+    pool:
+      vmImage: 'ubuntu-latest'
+    steps:
+    - task: Bash@3
+      displayName: Create Version File
+      inputs:
+        targetType: 'filePath'
+        filePath: scripts/create-version-file.sh
+        arguments: $(tag) container-content/version.txt
+    - task: Docker@2
+      displayName: Build image
+      inputs:
+        repository: '$(image-name)'
+        command: 'build'
+        Dockerfile: '**/Dockerfile'
+        tags: '$(tag)'
+    - task: Docker@2
+      displayName: Push image
+      inputs:
+        containerRegistry: '$(docker-registry-endpoint)'
+        repository: '$(image-name)'
+        command: 'push'
+        tags: '$(tag)'
+    - task: PublishBuildArtifacts@1
+      displayName: "Publish artifact:  scripts"
+      inputs:
+        PathtoPublish: scripts
+        ArtifactName: scripts
+- stage: Experimental
+  displayName: Experimental
+  dependsOn:  Build
+  jobs:
+    - template: tag-jobs.yaml
+      parameters:
+        environment:  experimental
+        targetVersion:  experimental
+- stage: Production
+  displayName: Production
+  dependsOn:  Experimental
+  jobs:
+    - template: tag-jobs.yaml
+      parameters:
+        environment:  production
+        targetVersion:  $(mainVersion)
