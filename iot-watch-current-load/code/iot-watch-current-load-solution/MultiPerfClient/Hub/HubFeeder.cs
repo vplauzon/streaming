@@ -62,7 +62,10 @@ namespace MultiPerfClient.Hub
                         null,
                         new Dictionary<string, double>()
                         {
-                            { "messagesPerMinute", messageCount / metricWatch.Elapsed.TotalSeconds * 60 }
+                            { "throughputPerMinute", messageCount / metricWatch.Elapsed.TotalSeconds * 60 },
+                            { "batchesPerHour", _configuration.BatchesPerHour },
+                            { "deviceCount", _configuration.DeviceCount },
+                            { "messageSize", _configuration.MessageSize }
                         });
                     //  Reset metrics
                     metricWatch.Restart();
@@ -103,7 +106,7 @@ namespace MultiPerfClient.Hub
                         await client.SendEventAsync(message);
                         ++messageCount;
                     }
-                    catch(Exception ex)
+                    catch (Exception ex)
                     {
                         _telemetryClient.TrackException(ex);
                     }
