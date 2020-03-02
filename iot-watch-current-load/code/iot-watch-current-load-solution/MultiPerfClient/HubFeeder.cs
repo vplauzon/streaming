@@ -1,5 +1,7 @@
 ﻿using Microsoft.Azure.Devices;
+using Microsoft.Azure.Devices.Client;
 using System;
+using System.Configuration;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -11,38 +13,22 @@ namespace MultiPerfClient
     /// </summary>
     internal class HubFeeder
     {
-        public static async Task RunAsync()
+        HubFeederConfiguration Configuration { get; } = new HubFeederConfiguration();
+
+        public async Task RunAsync()
         {
             Console.WriteLine("Hub Feeder");
+            Console.WriteLine($"Register {Configuration.DeviceCount} devices...");
 
-            var connectionString = Environment.GetEnvironmentVariable("IOT_CONN_STRING");
-            var deviceCountText = Environment.GetEnvironmentVariable("DEVICE_COUNT");
-            int deviceCount;
-
-            if (string.IsNullOrWhiteSpace(connectionString))
-            {
-                throw new ArgumentNullException("Env Var 'IOT_CONN_STRING' not set", "IOT_CONN_STRING");
-            }
-            else if (string.IsNullOrWhiteSpace(deviceCountText))
-            {
-                throw new ArgumentNullException("Env Var 'DEVICE_COUNT' not set", "DEVICE_COUNT");
-            }
-            else if (!int.TryParse(deviceCountText, out deviceCount))
-            {
-                throw new ArgumentException("Env Var 'DEVICE_COUNT' isn't an integer", "DEVICE_COUNT");
-            }
-            else
-            {
-                Console.WriteLine($"Register {deviceCount} devices...");
-
-                await RegisterDevicesAsync(connectionString, deviceCount);
-            }
+            await RegisterDevicesAsync();
+            //DeviceClient.CreateFromConnectionString()
         }
 
-        private async static Task RegisterDevicesAsync(string connectionString, int deviceCount)
+        private async Task RegisterDevicesAsync()
         {
-            var registryManager = RegistryManager.CreateFromConnectionString(connectionString);
-            var tasks = (from i in Enumerable.Range(0, deviceCount)
+            var registryManager = RegistryManager.CreateFromConnectionString(
+                Configuration.ConnectionString);
+            var tasks = (from i in Enumerable.Range(0, Configuration.DeviceCount)
                          select RegisterDeviceAsync(registryManager, i)).ToArray();
 
             await Task.WhenAll(tasks);
@@ -57,8 +43,7 @@ namespace MultiPerfClient
                     SymmetricKey = new SymmetricKey()
                 }
             };
-
-            await registryManager.AddDeviceAsync(device);
+            var result = await registryManager.AddDeviceAsync(device);
         }
     }
 }

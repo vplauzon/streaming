@@ -14,8 +14,10 @@ namespace MultiPerfClient
             switch (mode?.Trim())
             {
                 case "hub-feeder":
-                    await HubFeeder.RunAsync();
-                    
+                    var feeder = new HubFeeder();
+
+                    await feeder.RunAsync();
+
                     return;
 
                 default:
