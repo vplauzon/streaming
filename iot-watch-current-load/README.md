@@ -21,3 +21,7 @@ customMetrics
 | where timestamp > ago(10m)
 | sort by timestamp desc, cloud_RoleName asc
 ```
+
+Limits:
+
+https://docs.microsoft.com/en-us/azure/iot-hub/iot-hub-devguide-quotas-throttling

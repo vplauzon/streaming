@@ -179,35 +179,20 @@ namespace MultiPerfClient.Hub
                     SymmetricKey = new SymmetricKey()
                 }
             };
-            Func<Task<Device>> createDevice = async () => await registryManager.AddDeviceAsync(
-                device,
-                _cancellationTokenSource.Token);
-            var backout = TimeSpan.FromSeconds(5)
-                + TimeSpan.FromSeconds(_random.NextDouble() - 0.5);
-            const int MAX_RETRY = 5;
-            var retryCount = 0;
 
-            while (retryCount < MAX_RETRY)
+            try
             {
-                try
-                {
-                    device = await createDevice();
+                device = await registryManager.AddDeviceAsync(
+                    device,
+                    _cancellationTokenSource.Token);
 
-                    return device;
-                }
-                catch (Exception ex)
-                {
-                    var context = new Dictionary<string, string>()
-                    {
-                        { "retryCount", retryCount.ToString() }
-                    };
-
-                    _telemetryClient.TrackException(ex, context);
-                    ++retryCount;
-                }
+                return device;
             }
-
-            throw new InvalidOperationException("Exhaust retry on create-device");
+            catch (Exception ex)
+            {
+                _telemetryClient.TrackException(ex);
+                throw;
+            }
         }
     }
 }

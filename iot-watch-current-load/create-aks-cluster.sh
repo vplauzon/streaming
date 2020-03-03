@@ -36,13 +36,12 @@ echo "Deploy AKS Cluster"
 az aks create \
     -g $rg \
     -n $clusterName \
-    --node-count 1 \
+    --node-count 2 \
     --min-count 1 \
     --max-count 100 \
     --generate-ssh-keys \
     --nodepool-name default \
     --enable-cluster-autoscaler \
-    --enable-vmss \
     --kubernetes-version $kv
 
 echo

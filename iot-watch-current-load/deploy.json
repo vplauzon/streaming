@@ -18,8 +18,8 @@
         "uniqueId": "[variables('Unique ID')]"
       },
       "sku": {
-        "name": "S1",
-        "tier": "Standard",
+        "name": "B3",
+        "tier": "Basic",
         "capacity": 1
       },
       "properties": {
