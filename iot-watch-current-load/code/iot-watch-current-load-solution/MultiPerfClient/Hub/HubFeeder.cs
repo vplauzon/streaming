@@ -110,13 +110,32 @@ namespace MultiPerfClient.Hub
                          select SendMessageToOneClientAsync(c)).ToArray();
 
             await Task.WhenAll(tasks);
-            
+
             var messageCount = tasks.Sum(t => t.Result);
 
             return messageCount;
         }
 
         private async Task<int> SendMessageToOneClientAsync(DeviceClient client)
+        {
+            var message = new Microsoft.Azure.Devices.Client.Message(
+                CreateMessagePayload());
+
+            try
+            {
+                await client.SendEventAsync(message);
+
+                return 1;
+            }
+            catch (Exception ex)
+            {
+                _telemetryClient.TrackException(ex);
+
+                return 0;
+            }
+        }
+
+        private byte[] CreateMessagePayload()
         {
             using (var stream = new MemoryStream())
             using (var writer = new StreamWriter(stream))
@@ -129,22 +148,8 @@ namespace MultiPerfClient.Hub
                 writer.Write("'}");
 
                 writer.Flush();
-                stream.Position = 0;
 
-                var message = new Microsoft.Azure.Devices.Client.Message(writer.BaseStream);
-
-                try
-                {
-                    await client.SendEventAsync(message);
-
-                    return 1;
-                }
-                catch (Exception ex)
-                {
-                    _telemetryClient.TrackException(ex);
-
-                    return 0;
-                }
+                return stream.ToArray();
             }
         }
 
@@ -174,10 +179,35 @@ namespace MultiPerfClient.Hub
                     SymmetricKey = new SymmetricKey()
                 }
             };
+            Func<Task<Device>> createDevice = async () => await registryManager.AddDeviceAsync(
+                device,
+                _cancellationTokenSource.Token);
+            var backout = TimeSpan.FromSeconds(5)
+                + TimeSpan.FromSeconds(_random.NextDouble() - 0.5);
+            const int MAX_RETRY = 5;
+            var retryCount = 0;
 
-            device = await registryManager.AddDeviceAsync(device, _cancellationTokenSource.Token);
+            while (retryCount < MAX_RETRY)
+            {
+                try
+                {
+                    device = await createDevice();
 
-            return device;
+                    return device;
+                }
+                catch (Exception ex)
+                {
+                    var context = new Dictionary<string, string>()
+                    {
+                        { "retryCount", retryCount.ToString() }
+                    };
+
+                    _telemetryClient.TrackException(ex, context);
+                    ++retryCount;
+                }
+            }
+
+            throw new InvalidOperationException("Exhaust retry on create-device");
         }
     }
 }
