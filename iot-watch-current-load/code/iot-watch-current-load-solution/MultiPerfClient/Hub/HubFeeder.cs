@@ -17,6 +17,7 @@ namespace MultiPerfClient.Hub
     /// </summary>
     internal class HubFeeder
     {
+        private const int CONCURRENT_CALLS = 100;
         private readonly CancellationTokenSource _cancellationTokenSource = new CancellationTokenSource();
         private readonly HubFeederConfiguration _configuration = new HubFeederConfiguration();
         private readonly TelemetryClient _telemetryClient;
@@ -109,7 +110,7 @@ namespace MultiPerfClient.Hub
             var tasks = from c in clients
                         select SendMessageToOneClientAsync(c);
             //  Avoid having timeout for great quantity of devices
-            var results = await TaskRunner.RunAsync(tasks, 20);
+            var results = await TaskRunner.RunAsync(tasks, CONCURRENT_CALLS);
             var messageCount = results.Sum();
 
             return messageCount;
@@ -161,7 +162,7 @@ namespace MultiPerfClient.Hub
                         let id = $"{Environment.MachineName}.{uniqueCode}.{i}"
                         select RegisterDeviceAsync(registryManager, id);
             //  Avoid having timeout for great quantity of devices
-            var devices = await TaskRunner.RunAsync(tasks, 20);
+            var devices = await TaskRunner.RunAsync(tasks, CONCURRENT_CALLS);
 
             return devices.ToArray();
         }
