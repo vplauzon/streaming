@@ -17,8 +17,6 @@ namespace MultiPerfClient.Hub
     /// </summary>
     internal class HubFeeder
     {
-        private static readonly TimeSpan METRIC_WINDOW = TimeSpan.FromSeconds(60);
-
         private readonly CancellationTokenSource _cancellationTokenSource = new CancellationTokenSource();
         private readonly HubFeederConfiguration _configuration = new HubFeederConfiguration();
         private readonly TelemetryClient _telemetryClient;
@@ -64,37 +62,28 @@ namespace MultiPerfClient.Hub
 
         private async Task LoopMessagesAsync(DeviceClient[] clients)
         {
-            var delayWatch = new Stopwatch();
-            var metricWatch = new Stopwatch();
-            var delayMessageCount = 0;
+            var watch = new Stopwatch();
             var metricMessageCount = 0;
 
-            delayWatch.Start();
-            metricWatch.Start();
+            watch.Start();
             while (!_cancellationTokenSource.IsCancellationRequested)
             {
                 var messageCount = await SendingMessagesAsync(clients);
 
-                delayMessageCount += messageCount;
                 metricMessageCount += messageCount;
-                if (delayMessageCount >= _configuration.MessagesPerMinute)
+                if (metricMessageCount >= _configuration.MessagesPerMinute)
                 {
-                    var pause = TimeSpan.FromMinutes(1) - delayWatch.Elapsed;
+                    var pause = TimeSpan.FromSeconds(60 - DateTime.Now.Second);
 
-                    if (pause > TimeSpan.Zero)
+                    if (pause > TimeSpan.Zero && pause < TimeSpan.FromSeconds(59))
                     {
                         Console.WriteLine($"Pausing before next minute:  {pause}...");
                         await Task.Delay(pause);
                     }
-                    delayWatch.Restart();
-                    delayMessageCount = 0;
-                }
-                if (metricWatch.Elapsed >= METRIC_WINDOW)
-                {
                     Console.WriteLine("Writing metrics");
                     _telemetryClient.TrackMetric(
                         "message-throughput-per-minute",
-                        metricMessageCount / metricWatch.Elapsed.TotalSeconds * 60,
+                        metricMessageCount / watch.Elapsed.TotalSeconds * 60,
                         new Dictionary<string, string>()
                         {
                             { "batchesPerHour", _configuration.MessagesPerMinute.ToString() },
@@ -102,7 +91,7 @@ namespace MultiPerfClient.Hub
                             { "messageSize", _configuration.MessageSize.ToString() }
                         });
                     //  Reset metrics
-                    metricWatch.Restart();
+                    watch.Restart();
                     metricMessageCount = 0;
                 }
             }
