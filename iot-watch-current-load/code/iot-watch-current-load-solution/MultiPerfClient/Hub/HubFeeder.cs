@@ -104,39 +104,48 @@ namespace MultiPerfClient.Hub
 
         private async Task<int> SendingMessagesAsync(DeviceClient[] clients)
         {
-            var messageCount = 0;
-
             Console.WriteLine($"Sending 1 message to each {clients.Length} devices...");
-            foreach (var client in clients)
-            {
-                using (var stream = new MemoryStream())
-                using (var writer = new StreamWriter(stream))
-                {
-                    var payload = from i in Enumerable.Range(0, _configuration.MessageSize * 1024)
-                                  select (char)(_random.Next((int)'A', (int)'Z'));
 
-                    writer.Write("{'payload':'");
-                    writer.Write(payload.ToArray());
-                    writer.Write("'}");
+            var tasks = (from c in clients
+                         select SendMessageToOneClientAsync(c)).ToArray();
 
-                    writer.Flush();
-                    stream.Position = 0;
-
-                    var message = new Microsoft.Azure.Devices.Client.Message(writer.BaseStream);
-
-                    try
-                    {
-                        await client.SendEventAsync(message);
-                        ++messageCount;
-                    }
-                    catch (Exception ex)
-                    {
-                        _telemetryClient.TrackException(ex);
-                    }
-                }
-            }
+            await Task.WhenAll(tasks);
+            
+            var messageCount = tasks.Sum(t => t.Result);
 
             return messageCount;
+        }
+
+        private async Task<int> SendMessageToOneClientAsync(DeviceClient client)
+        {
+            using (var stream = new MemoryStream())
+            using (var writer = new StreamWriter(stream))
+            {
+                var payload = from i in Enumerable.Range(0, _configuration.MessageSize * 1024)
+                              select (char)(_random.Next((int)'A', (int)'Z'));
+
+                writer.Write("{'payload':'");
+                writer.Write(payload.ToArray());
+                writer.Write("'}");
+
+                writer.Flush();
+                stream.Position = 0;
+
+                var message = new Microsoft.Azure.Devices.Client.Message(writer.BaseStream);
+
+                try
+                {
+                    await client.SendEventAsync(message);
+
+                    return 1;
+                }
+                catch (Exception ex)
+                {
+                    _telemetryClient.TrackException(ex);
+
+                    return 0;
+                }
+            }
         }
 
         private async Task<Device[]> RegisterDevicesAsync()

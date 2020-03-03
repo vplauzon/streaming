@@ -19,5 +19,5 @@ kubectl apply -f service.yaml
 ```sql
 customMetrics
 | where timestamp > ago(10m)
-| sort by timestamp desc
+| sort by timestamp desc, cloud_RoleName asc
 ```
