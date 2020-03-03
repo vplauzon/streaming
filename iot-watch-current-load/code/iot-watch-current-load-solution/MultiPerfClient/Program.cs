@@ -3,6 +3,7 @@ using Microsoft.ApplicationInsights;
 using Microsoft.ApplicationInsights.Extensibility;
 using MultiPerfClient.Hub;
 using System;
+using System.Net;
 using System.Threading.Tasks;
 
 namespace MultiPerfClient
@@ -14,6 +15,7 @@ namespace MultiPerfClient
             var mode = Environment.GetEnvironmentVariable("MODE");
 
             Console.WriteLine("MultiPerfClient");
+            SetDefaultConnectionLimit();
 
             switch (mode?.Trim())
             {
@@ -42,6 +44,25 @@ namespace MultiPerfClient
                     }
 
                     return;
+            }
+        }
+
+        private static void SetDefaultConnectionLimit()
+        {
+            var concurrentConnectionText = Environment.GetEnvironmentVariable("CONCURRENT_CONNECTIONS");
+            int concurrentConnection;
+
+            if (string.IsNullOrWhiteSpace(concurrentConnectionText))
+            {
+                concurrentConnection = 2;
+            }
+            else
+            {
+                if (!int.TryParse(concurrentConnectionText, out concurrentConnection))
+                {
+                    throw new ArgumentException("Must be an integer", "CONCURRENT_CONNECTIONS");
+                }
+                ServicePointManager.DefaultConnectionLimit = concurrentConnection;
             }
         }
 
