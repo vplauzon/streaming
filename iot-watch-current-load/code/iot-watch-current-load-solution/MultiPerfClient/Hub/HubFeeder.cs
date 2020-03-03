@@ -64,6 +64,12 @@ namespace MultiPerfClient.Hub
         {
             var watch = new Stopwatch();
             var metricMessageCount = 0;
+            var context = new Dictionary<string, string>()
+            {
+                { "batchesPerHour", _configuration.MessagesPerMinute.ToString() },
+                { "deviceCount", _configuration.DeviceCount.ToString() },
+                { "messageSize", _configuration.MessageSize.ToString() }
+            };
 
             watch.Start();
             while (!_cancellationTokenSource.IsCancellationRequested)
@@ -82,14 +88,13 @@ namespace MultiPerfClient.Hub
                     }
                     Console.WriteLine("Writing metrics");
                     _telemetryClient.TrackMetric(
+                        "pause-length-in-seconds",
+                        pause.TotalSeconds,
+                        context);
+                    _telemetryClient.TrackMetric(
                         "message-throughput-per-minute",
                         metricMessageCount / watch.Elapsed.TotalSeconds * 60,
-                        new Dictionary<string, string>()
-                        {
-                            { "batchesPerHour", _configuration.MessagesPerMinute.ToString() },
-                            { "deviceCount", _configuration.DeviceCount.ToString() },
-                            { "messageSize", _configuration.MessageSize.ToString() }
-                        });
+                        context);
                     //  Reset metrics
                     watch.Restart();
                     metricMessageCount = 0;

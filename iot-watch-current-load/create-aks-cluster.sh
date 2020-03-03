@@ -16,11 +16,14 @@ echo "Resource group:  $rg"
 echo
 echo "Retrieving unique-id"
 
+#   Fetch unique ID used in the resource group
+#   We've explicitely attached it as a tag in the ARM template
 uniqueId=$(az resource list \
     --resource-type Microsoft.Devices/IotHubs \
     -g $rg \
     --query "[0].tags.uniqueId" \
     -o tsv)
+#   With it, we can determined the AKS cluster name
 clusterName="aks-$uniqueId"
 
 echo
@@ -35,19 +38,19 @@ az aks create \
     -n $clusterName \
     --node-count 1 \
     --min-count 1 \
-    --max-count 25 \
+    --max-count 100 \
     --generate-ssh-keys \
-    --nodepool-name feeder \
+    --nodepool-name default \
     --enable-cluster-autoscaler \
     --enable-vmss \
     --kubernetes-version $kv
 
 echo
-echo "Add node pool"
+echo "Login into AKS Cluster"
 
-az aks nodepool add \
-    -g $rg \
-    --cluster-name $clusterName \
-    --name peeker \
-    --node-count 1 \
-    --kubernetes-version $kv
+az aks get-credentials -g $rg -n $clusterName
+
+echo
+echo "Instantiate templates"
+
+./instantiate-template.sh $rg
