@@ -81,8 +81,11 @@ namespace MultiPerfClient.Hub
                 {
                     var pause = TimeSpan.FromMinutes(1) - delayWatch.Elapsed;
 
-                    Console.WriteLine($"Pausing before next minute:  {pause}...");
-                    await Task.Delay(pause);
+                    if (pause > TimeSpan.Zero)
+                    {
+                        Console.WriteLine($"Pausing before next minute:  {pause}...");
+                        await Task.Delay(pause);
+                    }
                     delayWatch.Restart();
                     delayMessageCount = 0;
                 }
