@@ -106,12 +106,11 @@ namespace MultiPerfClient.Hub
         {
             Console.WriteLine($"Sending 1 message to each {clients.Length} devices...");
 
-            var tasks = (from c in clients
-                         select SendMessageToOneClientAsync(c)).ToArray();
-
-            await Task.WhenAll(tasks);
-
-            var messageCount = tasks.Sum(t => t.Result);
+            var tasks = from c in clients
+                        select SendMessageToOneClientAsync(c);
+            //  Avoid having timeout for great quantity of devices
+            var results = await TaskRunner.RunAsync(tasks, 20);
+            var messageCount = results.Sum();
 
             return messageCount;
         }
@@ -158,14 +157,11 @@ namespace MultiPerfClient.Hub
             var registryManager = RegistryManager.CreateFromConnectionString(
                 _configuration.ConnectionString);
             var uniqueCode = Guid.NewGuid().GetHashCode().ToString("x8");
-            var tasks = (from i in Enumerable.Range(0, _configuration.DeviceCount)
-                         let id = $"{Environment.MachineName}.{uniqueCode}.{i}"
-                         select RegisterDeviceAsync(registryManager, id)).ToArray();
-
-            await Task.WhenAll(tasks);
-
-            var devices = from t in tasks
-                          select t.Result;
+            var tasks = from i in Enumerable.Range(0, _configuration.DeviceCount)
+                        let id = $"{Environment.MachineName}.{uniqueCode}.{i}"
+                        select RegisterDeviceAsync(registryManager, id);
+            //  Avoid having timeout for great quantity of devices
+            var devices = await TaskRunner.RunAsync(tasks, 20);
 
             return devices.ToArray();
         }

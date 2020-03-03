@@ -48,8 +48,3 @@ echo
 echo "Login into AKS Cluster"
 
 az aks get-credentials -g $rg -n $clusterName
-
-echo
-echo "Instantiate templates"
-
-./instantiate-template.sh $rg

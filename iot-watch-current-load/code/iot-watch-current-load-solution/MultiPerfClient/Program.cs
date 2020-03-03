@@ -62,8 +62,8 @@ namespace MultiPerfClient
                 {
                     throw new ArgumentException("Must be an integer", "CONCURRENT_CONNECTIONS");
                 }
-                ServicePointManager.DefaultConnectionLimit = concurrentConnection;
             }
+            ServicePointManager.DefaultConnectionLimit = concurrentConnection;
         }
 
         private static TelemetryClient InitAppInsights(string roleName)
