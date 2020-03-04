@@ -36,10 +36,14 @@ namespace MultiPerfClient.Hub
             try
             {
                 var deviceIds = await RegisterDevicesAsync();
+                var clients = (from id in deviceIds
+                               select DeviceClient.CreateFromConnectionString(
+                                   _configuration.ConnectionString,
+                                   id)).ToArray();
 
                 Console.WriteLine("Looping for messages...");
 
-                await LoopMessagesAsync(deviceIds);
+                await LoopMessagesAsync(clients);
             }
             catch (Exception ex)
             {
@@ -57,9 +61,8 @@ namespace MultiPerfClient.Hub
             _cancellationTokenSource.Cancel();
         }
 
-        private async Task LoopMessagesAsync(string[] deviceIds)
+        private async Task LoopMessagesAsync(DeviceClient[] clients)
         {
-            var client = DeviceClient.CreateFromConnectionString(_configuration.ConnectionString);
             var watch = new Stopwatch();
             var metricMessageCount = 0;
             var context = new Dictionary<string, string>()
@@ -72,7 +75,7 @@ namespace MultiPerfClient.Hub
             watch.Start();
             while (!_cancellationTokenSource.IsCancellationRequested)
             {
-                var messageCount = await SendingMessagesAsync(client, deviceIds);
+                var messageCount = await SendingMessagesAsync(clients);
 
                 metricMessageCount += messageCount;
                 if (metricMessageCount >= _configuration.MessagesPerMinute)
@@ -82,7 +85,7 @@ namespace MultiPerfClient.Hub
                     if (pause > TimeSpan.Zero && pause < TimeSpan.FromSeconds(59))
                     {
                         Console.WriteLine($"Pausing before next minute:  {pause}...");
-                        await Task.Delay(pause);
+                        await Task.Delay(pause, _cancellationTokenSource.Token);
                     }
                     Console.WriteLine("Writing metrics");
                     _telemetryClient.TrackMetric(
@@ -100,12 +103,13 @@ namespace MultiPerfClient.Hub
             }
         }
 
-        private async Task<int> SendingMessagesAsync(DeviceClient client, string[] deviceIds)
+        private async Task<int> SendingMessagesAsync(DeviceClient[] clients)
         {
-            Console.WriteLine($"Sending 1 message to each {deviceIds.Length} devices...");
+            Console.WriteLine($"Sending 1 message to each {clients.Length} devices...");
 
-            var tasks = from id in deviceIds
-                        select SendMessageToOneClientAsync(client, id);
+            var tasks = from client in clients
+                        select SendMessageToOneClientAsync(client);
+
             //  Avoid having timeout for great quantity of devices
             var results = await TaskRunner.RunAsync(tasks, CONCURRENT_CALLS);
             var messageCount = results.Sum();
@@ -113,10 +117,10 @@ namespace MultiPerfClient.Hub
             return messageCount;
         }
 
-        private async Task<int> SendMessageToOneClientAsync(DeviceClient client, string id)
+        private async Task<int> SendMessageToOneClientAsync(DeviceClient client)
         {
             using (var message = new Microsoft.Azure.Devices.Client.Message(
-                CreateMessagePayload(id)))
+                CreateMessagePayload()))
             {
                 try
                 {
@@ -133,7 +137,7 @@ namespace MultiPerfClient.Hub
             }
         }
 
-        private byte[] CreateMessagePayload(string id)
+        private byte[] CreateMessagePayload()
         {
             using (var stream = new MemoryStream())
             using (var writer = new StreamWriter(stream))
@@ -141,7 +145,7 @@ namespace MultiPerfClient.Hub
                 var payload = from i in Enumerable.Range(0, _configuration.MessageSize * 1024)
                               select (char)(_random.Next((int)'A', (int)'Z'));
 
-                writer.Write($"{{'deviceId':'{id}','payload':'");
+                writer.Write("{'payload':'");
                 writer.Write(payload.ToArray());
                 writer.Write("'}");
 
