@@ -118,20 +118,21 @@ namespace MultiPerfClient.Hub
 
         private async Task<int> SendMessageToOneClientAsync(DeviceClient client)
         {
-            var message = new Microsoft.Azure.Devices.Client.Message(
-                CreateMessagePayload());
-
-            try
+            using (var message = new Microsoft.Azure.Devices.Client.Message(
+                CreateMessagePayload()))
             {
-                await client.SendEventAsync(message);
+                try
+                {
+                    await client.SendEventAsync(message);
 
-                return 1;
-            }
-            catch (Exception ex)
-            {
-                _telemetryClient.TrackException(ex);
+                    return 1;
+                }
+                catch (Exception ex)
+                {
+                    _telemetryClient.TrackException(ex);
 
-                return 0;
+                    return 0;
+                }
             }
         }
 
