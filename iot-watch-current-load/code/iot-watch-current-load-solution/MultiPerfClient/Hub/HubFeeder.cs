@@ -35,15 +35,11 @@ namespace MultiPerfClient.Hub
 
             try
             {
-                var devices = await RegisterDevicesAsync();
-                var clients = (from d in devices
-                               select DeviceClient.CreateFromConnectionString(
-                                   _configuration.ConnectionString,
-                                   d.Id)).ToArray();
+                var deviceIds = await RegisterDevicesAsync();
 
                 Console.WriteLine("Looping for messages...");
 
-                await LoopMessagesAsync(clients);
+                await LoopMessagesAsync(deviceIds);
             }
             catch (Exception ex)
             {
@@ -61,8 +57,9 @@ namespace MultiPerfClient.Hub
             _cancellationTokenSource.Cancel();
         }
 
-        private async Task LoopMessagesAsync(DeviceClient[] clients)
+        private async Task LoopMessagesAsync(string[] deviceIds)
         {
+            var client = DeviceClient.CreateFromConnectionString(_configuration.ConnectionString);
             var watch = new Stopwatch();
             var metricMessageCount = 0;
             var context = new Dictionary<string, string>()
@@ -75,7 +72,7 @@ namespace MultiPerfClient.Hub
             watch.Start();
             while (!_cancellationTokenSource.IsCancellationRequested)
             {
-                var messageCount = await SendingMessagesAsync(clients);
+                var messageCount = await SendingMessagesAsync(client, deviceIds);
 
                 metricMessageCount += messageCount;
                 if (metricMessageCount >= _configuration.MessagesPerMinute)
@@ -103,12 +100,12 @@ namespace MultiPerfClient.Hub
             }
         }
 
-        private async Task<int> SendingMessagesAsync(DeviceClient[] clients)
+        private async Task<int> SendingMessagesAsync(DeviceClient client, string[] deviceIds)
         {
-            Console.WriteLine($"Sending 1 message to each {clients.Length} devices...");
+            Console.WriteLine($"Sending 1 message to each {deviceIds.Length} devices...");
 
-            var tasks = from c in clients
-                        select SendMessageToOneClientAsync(c);
+            var tasks = from id in deviceIds
+                        select SendMessageToOneClientAsync(client, id);
             //  Avoid having timeout for great quantity of devices
             var results = await TaskRunner.RunAsync(tasks, CONCURRENT_CALLS);
             var messageCount = results.Sum();
@@ -116,10 +113,10 @@ namespace MultiPerfClient.Hub
             return messageCount;
         }
 
-        private async Task<int> SendMessageToOneClientAsync(DeviceClient client)
+        private async Task<int> SendMessageToOneClientAsync(DeviceClient client, string id)
         {
             using (var message = new Microsoft.Azure.Devices.Client.Message(
-                CreateMessagePayload()))
+                CreateMessagePayload(id)))
             {
                 try
                 {
@@ -136,7 +133,7 @@ namespace MultiPerfClient.Hub
             }
         }
 
-        private byte[] CreateMessagePayload()
+        private byte[] CreateMessagePayload(string id)
         {
             using (var stream = new MemoryStream())
             using (var writer = new StreamWriter(stream))
@@ -144,7 +141,7 @@ namespace MultiPerfClient.Hub
                 var payload = from i in Enumerable.Range(0, _configuration.MessageSize * 1024)
                               select (char)(_random.Next((int)'A', (int)'Z'));
 
-                writer.Write("{'payload':'");
+                writer.Write($"{{'deviceId':'{id}','payload':'");
                 writer.Write(payload.ToArray());
                 writer.Write("'}");
 
@@ -154,7 +151,7 @@ namespace MultiPerfClient.Hub
             }
         }
 
-        private async Task<Device[]> RegisterDevicesAsync()
+        private async Task<string[]> RegisterDevicesAsync()
         {
             var registryManager = RegistryManager.CreateFromConnectionString(
                 _configuration.ConnectionString);
@@ -165,7 +162,7 @@ namespace MultiPerfClient.Hub
             //  Avoid having timeout for great quantity of devices
             var devices = await TaskRunner.RunAsync(tasks, CONCURRENT_CALLS);
 
-            return devices.ToArray();
+            return devices.Select(d => d.Id).ToArray();
         }
 
         private async Task<Device> RegisterDeviceAsync(RegistryManager registryManager, string id)
