@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -61,60 +62,82 @@ namespace MultiPerfClient.Hub
             _cancellationTokenSource.Cancel();
         }
 
-        private async Task LoopMessagesAsync(DeviceClient[] clients)
+        private async Task LoopMessagesAsync(DeviceClient[] allClients)
         {
-            var watch = new Stopwatch();
-            var metricMessageCount = 0;
             var context = new Dictionary<string, string>()
             {
-                { "batchesPerHour", _configuration.MessagesPerMinute.ToString() },
                 { "deviceCount", _configuration.DeviceCount.ToString() },
+                { "messagePerSecond", _configuration.MessagesPerSecond.ToString() },
                 { "messageSize", _configuration.MessageSize.ToString() }
             };
 
-            watch.Start();
             while (!_cancellationTokenSource.IsCancellationRequested)
-            {
-                var messageCount = await SendingMessagesAsync(clients);
+            {   //  Represent a loop in all clients
+                var loopWatch = new Stopwatch();
+                var metricMessageCount = 0;
+                var pauseCount = 0;
+                var iterations = 0;
+                var clientGroups =
+                    TaskRunner.Segment(allClients, _configuration.MessagesPerSecond);
 
-                metricMessageCount += messageCount;
-                if (metricMessageCount >= _configuration.MessagesPerMinute)
+                Console.WriteLine($"Sending 1 message to each {allClients.Length} devices...");
+                loopWatch.Start();
+
+                //  Send a message to each client
+                foreach (var clientGroup in clientGroups)
                 {
-                    var pause = TimeSpan.FromSeconds(60 - DateTime.Now.Second);
+                    var groupWatch = new Stopwatch();
+                    var tasks = from client in clientGroup
+                                select SendMessageToOneClientAsync(client);
 
-                    if (pause > TimeSpan.Zero && pause < TimeSpan.FromSeconds(59))
+                    groupWatch.Start();
+
+                    //  Avoid having timeout for great quantity of devices
+                    var results = await TaskRunner.RunAsync(
+                        tasks,
+                        CONCURRENT_CALLS);
+                    var requiredPause = TimeSpan.FromSeconds(1) - groupWatch.Elapsed;
+
+                    ++iterations;
+                    metricMessageCount += results.Sum();
+                    if (requiredPause > TimeSpan.Zero)
                     {
-                        Console.WriteLine($"Pausing before next minute:  {pause}...");
-                        await Task.Delay(pause, _cancellationTokenSource.Token);
+                        ++pauseCount;
+                        await Task.Delay(requiredPause, _cancellationTokenSource.Token);
                     }
-                    Console.WriteLine("Writing metrics");
-                    _telemetryClient.TrackMetric(
-                        "pause-length-in-seconds",
-                        pause.TotalSeconds,
-                        context);
-                    _telemetryClient.TrackMetric(
-                        "message-throughput-per-minute",
-                        metricMessageCount / watch.Elapsed.TotalSeconds * 60,
-                        context);
-                    //  Reset metrics
-                    watch.Restart();
-                    metricMessageCount = 0;
                 }
+                Console.WriteLine("Writing metrics");
+                WriteMetrics(
+                    allClients,
+                    context,
+                    metricMessageCount,
+                    pauseCount,
+                    iterations,
+                    loopWatch.Elapsed.TotalSeconds);
             }
         }
 
-        private async Task<int> SendingMessagesAsync(DeviceClient[] clients)
+        private void WriteMetrics(
+            DeviceClient[] allClients,
+            Dictionary<string, string> context,
+            int metricMessageCount,
+            int pauseCount,
+            int iterations,
+            double duration)
         {
-            Console.WriteLine($"Sending 1 message to each {clients.Length} devices...");
-
-            var tasks = from client in clients
-                        select SendMessageToOneClientAsync(client);
-
-            //  Avoid having timeout for great quantity of devices
-            var results = await TaskRunner.RunAsync(tasks, CONCURRENT_CALLS);
-            var messageCount = results.Sum();
-
-            return messageCount;
+            _telemetryClient.TrackMetric(
+                "message-throughput-per-second",
+                metricMessageCount / duration,
+                context);
+            _telemetryClient.TrackMetric(
+                "pause-ratio",
+                (double)pauseCount / iterations,
+                context);
+            _telemetryClient.TrackMetric(
+                "sent-ratio",
+                (double)metricMessageCount / allClients.Length,
+                context);
+            _telemetryClient.Flush();
         }
 
         private async Task<int> SendMessageToOneClientAsync(DeviceClient client)

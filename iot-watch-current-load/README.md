@@ -24,5 +24,6 @@ customMetrics
 
 Limits:
 
+4Kb:  https://docs.microsoft.com/en-us/azure/iot-hub/iot-hub-devguide-quotas-throttling#quotas-and-throttling
 https://docs.microsoft.com/en-us/azure/iot-hub/iot-hub-devguide-quotas-throttling
 https://docs.microsoft.com/en-us/azure/iot-hub/iot-hub-scaling

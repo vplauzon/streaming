@@ -10,8 +10,8 @@ namespace MultiPerfClient.Hub
             var connectionString = Environment.GetEnvironmentVariable("IOT_CONN_STRING");
             var deviceCountText = Environment.GetEnvironmentVariable("DEVICE_COUNT");
             int deviceCount;
-            var messagesPerMinuteText = Environment.GetEnvironmentVariable("MESSAGES_PER_MINUTE");
-            int messagesPerMinute;
+            var messagesPerSecondText = Environment.GetEnvironmentVariable("MESSAGES_PER_SECOND");
+            int messagesPerSecond;
             var messageSizeText = Environment.GetEnvironmentVariable("MESSAGE_SIZE_IN_KB");
             int messageSize;
 
@@ -27,13 +27,13 @@ namespace MultiPerfClient.Hub
             {
                 throw new ArgumentException("Env Var isn't an integer", "DEVICE_COUNT");
             }
-            else if (string.IsNullOrWhiteSpace(messagesPerMinuteText))
+            else if (string.IsNullOrWhiteSpace(messagesPerSecondText))
             {
-                throw new ArgumentNullException("Environment variable missing", "MESSAGES_PER_MINUTE");
+                throw new ArgumentNullException("Environment variable missing", "MESSAGES_PER_SECOND");
             }
-            else if (!int.TryParse(messagesPerMinuteText, out messagesPerMinute))
+            else if (!int.TryParse(messagesPerSecondText, out messagesPerSecond))
             {
-                throw new ArgumentException("Env Var isn't an integer", "MESSAGES_PER_MINUTE");
+                throw new ArgumentException("Env Var isn't an integer", "MESSAGES_PER_SECOND");
             }
             else if (string.IsNullOrWhiteSpace(messageSizeText))
             {
@@ -45,7 +45,7 @@ namespace MultiPerfClient.Hub
             }
             ConnectionString = connectionString;
             DeviceCount = deviceCount;
-            MessagesPerMinute = messagesPerMinute;
+            MessagesPerSecond = messagesPerSecond;
             MessageSize = messageSize;
         }
 
@@ -53,7 +53,7 @@ namespace MultiPerfClient.Hub
 
         public int DeviceCount { get; }
 
-        public int MessagesPerMinute { get; }
+        public int MessagesPerSecond { get; }
 
         public int MessageSize { get; }
     }
