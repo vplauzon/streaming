@@ -156,36 +156,52 @@ namespace MultiPerfClient.Hub
             var registryManager = RegistryManager.CreateFromConnectionString(
                 _configuration.ConnectionString);
             var uniqueCode = Guid.NewGuid().GetHashCode().ToString("x8");
-            var tasks = from i in Enumerable.Range(0, _configuration.DeviceCount)
-                        let id = $"{Environment.MachineName}.{uniqueCode}.{i}"
-                        select RegisterDeviceAsync(registryManager, id);
-            //  Avoid having timeout for great quantity of devices
-            var devices = await TaskRunner.RunAsync(tasks, CONCURRENT_CALLS);
+            var ids = (from i in Enumerable.Range(0, _configuration.DeviceCount)
+                       select $"{Environment.MachineName}.{uniqueCode}.{i}").ToArray();
+            var idSegments = TaskRunner.Segment(ids, 100);
+            //  Register devices in batches
+            var tasks = from segment in idSegments
+                        select RegisterBatchDeviceAsync(registryManager, segment);
 
-            return devices.Select(d => d.Id).ToArray();
+            //  Avoid having timeout for great quantity of devices
+            await TaskRunner.RunAsync(tasks, CONCURRENT_CALLS);
+
+            return ids;
         }
 
-        private async Task<Device> RegisterDeviceAsync(RegistryManager registryManager, string id)
+        private async Task<string[]> RegisterBatchDeviceAsync(
+            RegistryManager registryManager,
+            string[] ids)
         {
-            var device = new Device(id)
-            {
-                Authentication = new AuthenticationMechanism
-                {
-                    SymmetricKey = new SymmetricKey()
-                }
-            };
+            var devices = from id in ids
+                          select new Device(id)
+                          {
+                              Authentication = new AuthenticationMechanism
+                              {
+                                  SymmetricKey = new SymmetricKey()
+                              }
+                          };
 
             try
             {
-                device = await registryManager.AddDeviceAsync(
-                    device,
+                var result = await registryManager.AddDevices2Async(
+                    devices,
                     _cancellationTokenSource.Token);
 
-                return device;
+                if (result.IsSuccessful)
+                {
+                    return ids;
+                }
+                else
+                {
+                    throw new InvalidOperationException(
+                        $"{result.Errors.Length} errors detected while registering devices");
+                }
             }
             catch (Exception ex)
             {
                 _telemetryClient.TrackException(ex);
+
                 throw;
             }
         }

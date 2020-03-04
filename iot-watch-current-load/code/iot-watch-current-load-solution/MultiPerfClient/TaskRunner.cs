@@ -7,24 +7,40 @@ namespace MultiPerfClient
 {
     internal static class TaskRunner
     {
-        public static async Task<IEnumerable<T>> RunAsync<T>(
-            IEnumerable<Task<T>> tasks,
-            int concurrentDegree)
+        public static IEnumerable<T[]> Segment<T>(IEnumerable<T> list, int segmentMaxLength)
         {
-            var enumerator = tasks.GetEnumerator();
-            var windowTasks = new List<Task<T>>();
-            var results = new List<T>();
+            var enumerator = list.GetEnumerator();
+            var segment = new List<T>();
 
             while (enumerator.MoveNext())
             {
                 do
                 {
-                    windowTasks.Add(enumerator.Current);
+                    segment.Add(enumerator.Current);
                 }
-                while (windowTasks.Count < concurrentDegree && enumerator.MoveNext());
+                while (segment.Count < segmentMaxLength && enumerator.MoveNext());
 
-                await Task.WhenAll(windowTasks);
-                results.AddRange(windowTasks.Select(t => t.Result));
+                yield return segment.ToArray();
+                segment.Clear();
+            }
+
+            if (segment.Count > 0)
+            {
+                yield return segment.ToArray();
+            }
+        }
+
+        public static async Task<IEnumerable<T>> RunAsync<T>(
+            IEnumerable<Task<T>> tasks,
+            int concurrentDegree)
+        {
+            var segments = Segment(tasks, concurrentDegree);
+            var results = new List<T>();
+
+            foreach (var segment in segments)
+            {
+                await Task.WhenAll(segment);
+                results.AddRange(segment.Select(t => t.Result));
             }
 
             return results;
