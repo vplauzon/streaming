@@ -12,22 +12,20 @@ namespace MultiPerfClient
             int concurrentDegree)
         {
             var enumerator = tasks.GetEnumerator();
-            var windowTasks = new Queue<Task<T>>();
+            var windowTasks = new List<Task<T>>();
             var results = new List<T>();
 
             while (enumerator.MoveNext())
             {
-                windowTasks.Enqueue(enumerator.Current);
-                if (windowTasks.Count >= concurrentDegree)
+                do
                 {
-                    var nextReady = windowTasks.Dequeue();
-                    var nextResult = await nextReady;
-
-                    results.Add(nextResult);
+                    windowTasks.Add(enumerator.Current);
                 }
+                while (windowTasks.Count < concurrentDegree && enumerator.MoveNext());
+
+                await Task.WhenAll(windowTasks);
+                results.AddRange(windowTasks.Select(t => t.Result));
             }
-            await Task.WhenAll(windowTasks);
-            results.AddRange(windowTasks.Select(t => t.Result));
 
             return results;
         }
