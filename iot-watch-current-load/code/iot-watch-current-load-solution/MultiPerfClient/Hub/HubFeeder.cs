@@ -142,12 +142,17 @@ namespace MultiPerfClient.Hub
 
         private async Task<int> SendMessageToOneClientAsync(DeviceClient client)
         {
+            var timeoutSource = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+            var combinedSource = CancellationTokenSource.CreateLinkedTokenSource(
+                _cancellationTokenSource.Token,
+                timeoutSource.Token);
+
             using (var message = new Microsoft.Azure.Devices.Client.Message(
                 CreateMessagePayload()))
             {
                 try
                 {
-                    await client.SendEventAsync(message);
+                    await client.SendEventAsync(message, combinedSource.Token);
 
                     return 1;
                 }
