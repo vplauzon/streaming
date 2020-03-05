@@ -22,6 +22,11 @@ customMetrics
 | sort by timestamp desc, cloud_RoleName asc
 ```
 
+```sql
+exceptions 
+| where timestamp > ago(10m)
+```
+
 Limits:
 
 4Kb:  https://docs.microsoft.com/en-us/azure/iot-hub/iot-hub-devguide-quotas-throttling#quotas-and-throttling
