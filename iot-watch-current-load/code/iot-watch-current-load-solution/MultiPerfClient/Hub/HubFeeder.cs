@@ -190,7 +190,7 @@ namespace MultiPerfClient.Hub
             var uniqueCode = Guid.NewGuid().GetHashCode().ToString("x8");
             var ids = (from i in Enumerable.Range(0, _configuration.DeviceCount)
                        select $"{Environment.MachineName}.{uniqueCode}.{i}").ToArray();
-            var idSegments = TaskRunner.Segment(ids, 100);
+            var idSegments = TaskRunner.Segment(ids, 80);
             //  Register devices in batches
             var tasks = from segment in idSegments
                         select RegisterBatchDeviceAsync(registryManager, segment);
@@ -222,6 +222,8 @@ namespace MultiPerfClient.Hub
 
                 if (result.IsSuccessful)
                 {
+                    await Task.Delay(TimeSpan.FromSeconds(1));
+
                     return ids;
                 }
                 else
