@@ -20,9 +20,7 @@ kubectl apply -f service.yaml
 customMetrics
 | where timestamp > ago(10m)
 | sort by timestamp desc, cloud_RoleName asc
-```
 
-```sql
 exceptions 
 | where timestamp > ago(10m)
 ```

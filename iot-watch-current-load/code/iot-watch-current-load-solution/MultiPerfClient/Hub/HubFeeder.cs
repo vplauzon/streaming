@@ -142,7 +142,7 @@ namespace MultiPerfClient.Hub
 
         private async Task<int> SendMessageToOneClientAsync(DeviceClient client)
         {
-            var timeoutSource = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+            var timeoutSource = new CancellationTokenSource(TimeSpan.FromSeconds(1));
             var combinedSource = CancellationTokenSource.CreateLinkedTokenSource(
                 _cancellationTokenSource.Token,
                 timeoutSource.Token);
