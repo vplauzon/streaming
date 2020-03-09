@@ -135,6 +135,10 @@ namespace MultiPerfClient.Hub
             double duration)
         {
             _telemetryClient.TrackMetric(
+                "message-count",
+                metricMessageCount,
+                context);
+            _telemetryClient.TrackMetric(
                 "message-throughput-per-second",
                 metricMessageCount / duration,
                 context);
