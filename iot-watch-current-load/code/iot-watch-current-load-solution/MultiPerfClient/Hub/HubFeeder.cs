@@ -18,7 +18,7 @@ namespace MultiPerfClient.Hub
     /// </summary>
     internal class HubFeeder
     {
-        private const int CONCURRENT_CALLS = 100;
+        private const int CONCURRENT_CALLS = 200;
         private readonly CancellationTokenSource _cancellationTokenSource = new CancellationTokenSource();
         private readonly HubFeederConfiguration _configuration = new HubFeederConfiguration();
         private readonly TelemetryClient _telemetryClient;
