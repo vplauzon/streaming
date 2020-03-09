@@ -21,8 +21,16 @@ customMetrics
 | where timestamp > ago(10m)
 | sort by timestamp desc, cloud_RoleName asc
 
+customMetrics
+| where timestamp > ago(1h)
+| where name=="message-throughput-per-second"
+| summarize throughput=avg(valueSum) by bin(timestamp, 1m)
+| render columnchart 
+
 exceptions 
 | where timestamp > ago(10m)
+| sort by timestamp desc
+| limit 10
 ```
 
 Limits:

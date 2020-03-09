@@ -37,10 +37,19 @@ namespace MultiPerfClient.Hub
             try
             {
                 var deviceIds = await RegisterDevicesAsync();
+                var setting = new AmqpTransportSettings(Microsoft.Azure.Devices.Client.TransportType.Amqp_Tcp_Only)
+                {
+                    AmqpConnectionPoolSettings = new AmqpConnectionPoolSettings()
+                    {
+                        Pooling = true
+                    }
+                };
+                var settings = new ITransportSettings[] { setting };
                 var clients = (from id in deviceIds
                                select DeviceClient.CreateFromConnectionString(
                                    _configuration.ConnectionString,
-                                   id)).ToArray();
+                                   id,
+                                   settings)).ToArray();
 
                 Console.WriteLine("Looping for messages...");
 

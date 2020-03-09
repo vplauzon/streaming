@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hub-feeder-deploy
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app:  hub-feeder-pod
+  template:
+    metadata:
+      labels:
+        app: hub-feeder-pod
+    spec:
+      containers:
+      - name: main
+        image: vplauzon/perf-streaming:experimental
+        imagePullPolicy: Always
+        env:
+        - name: MODE
+          value: "hub-feeder"
+        - name: CONCURRENT_CONNECTIONS
+          value: "2"
+        - name: APP_INSIGHTS_KEY
+          value: "{app-insights-key}"
+        - name: IOT_CONN_STRING
+          value: "{iot-connection-string}"
+        - name: DEVICE_COUNT
+          value: "6000"
+        - name: MESSAGES_PER_SECOND
+          value: "100"
+        - name: MESSAGE_SIZE_IN_KB
+          value: "3"
+        resources:
+          requests:
+            memory: "512M"
+            cpu: "1200m"
+          limits:
+            memory: "5G"
+            cpu: "2"
