@@ -41,8 +41,7 @@ namespace MultiPerfClient.Hub
                 {
                     AmqpConnectionPoolSettings = new AmqpConnectionPoolSettings()
                     {
-                        Pooling = true,
-                        MaxPoolSize = (uint)_configuration.MessagesPerSecond
+                        Pooling = true
                     }
                 };
                 var settings = new ITransportSettings[] { setting };

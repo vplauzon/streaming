@@ -15,7 +15,6 @@ namespace MultiPerfClient
             var mode = Environment.GetEnvironmentVariable("MODE");
 
             Console.WriteLine("MultiPerfClient");
-            SetDefaultConnectionLimit();
 
             switch (mode?.Trim())
             {
@@ -45,25 +44,6 @@ namespace MultiPerfClient
 
                     return;
             }
-        }
-
-        private static void SetDefaultConnectionLimit()
-        {
-            var concurrentConnectionText = Environment.GetEnvironmentVariable("CONCURRENT_CONNECTIONS");
-            int concurrentConnection;
-
-            if (string.IsNullOrWhiteSpace(concurrentConnectionText))
-            {
-                concurrentConnection = 2;
-            }
-            else
-            {
-                if (!int.TryParse(concurrentConnectionText, out concurrentConnection))
-                {
-                    throw new ArgumentException("Must be an integer", "CONCURRENT_CONNECTIONS");
-                }
-            }
-            ServicePointManager.DefaultConnectionLimit = concurrentConnection;
         }
 
         private static TelemetryClient InitAppInsights(string roleName)

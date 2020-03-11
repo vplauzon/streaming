@@ -19,8 +19,6 @@ spec:
         env:
         - name: MODE
           value: "hub-feeder"
-        - name: CONCURRENT_CONNECTIONS
-          value: "2"
         - name: APP_INSIGHTS_KEY
           value: "{app-insights-key}"
         - name: IOT_CONN_STRING
