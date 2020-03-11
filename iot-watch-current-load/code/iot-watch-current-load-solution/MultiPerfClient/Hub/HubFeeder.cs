@@ -23,12 +23,10 @@ namespace MultiPerfClient.Hub
         private readonly HubFeederConfiguration _configuration = new HubFeederConfiguration();
         private readonly TelemetryClient _telemetryClient;
         private readonly Random _random = new Random();
-        private readonly byte[] _payload;
 
         public HubFeeder(TelemetryClient telemetryClient)
         {
             _telemetryClient = telemetryClient;
-            _payload = CreateMessagePayload();
         }
 
         public async Task RunAsync()
@@ -163,8 +161,7 @@ namespace MultiPerfClient.Hub
                 timeoutSource.Token);
 
             using (var message = new Microsoft.Azure.Devices.Client.Message(
-                _payload))
-                //CreateMessagePayload()))
+                CreateMessagePayload()))
             {
                 try
                 {
