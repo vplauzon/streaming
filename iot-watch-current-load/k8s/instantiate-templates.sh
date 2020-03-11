@@ -28,13 +28,13 @@ appInsightsKey=$(az monitor app-insights component show \
     -o tsv)
 
 echo
-echo "Instantiating service.yaml"
+echo "Instantiating hub-feeder.yaml"
 
 #   Escape connection string that might contain '/' in it:
 escapedIotConnectionString=$(echo $iotConnectionString|sed -e 's/[\/&]/\\&/g')
 
 #   Find and replace tokens
-sed "s/{app-insights-key}/$appInsightsKey/g" service-template.yaml \
+sed "s/{app-insights-key}/$appInsightsKey/g" hub-feeder-template.yaml \
     | sed "s/{iot-connection-string}/$escapedIotConnectionString/g" \
-    > service.yaml
+    > hub-feeder.yaml
 

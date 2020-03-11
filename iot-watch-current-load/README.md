@@ -23,8 +23,8 @@ customMetrics
 
 customMetrics
 | where timestamp > ago(1h)
-| where name=="message-throughput-per-second"
-| summarize throughput=avg(valueSum) by bin(timestamp, 1m)
+| where name=="message-count"
+| summarize throughputPerSecond=sum(valueSum)/60.0 by bin(timestamp, 1m)
 | render columnchart 
 
 exceptions 
