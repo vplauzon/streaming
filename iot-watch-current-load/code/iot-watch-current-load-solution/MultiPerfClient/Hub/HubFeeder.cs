@@ -85,7 +85,7 @@ namespace MultiPerfClient.Hub
                     TaskRunner.Segment(allClients, _configuration.MessagesPerSecond);
                 var clientGroupTasks = from c in clientGroups
                                        let tasks = from client in c
-                                                   //  Send a message to each client
+                                                       //  Send a message to each client
                                                    select SendMessageToOneClientAsync(client)
                                        select Task.WhenAll(tasks);
 
@@ -96,7 +96,7 @@ namespace MultiPerfClient.Hub
                     clientGroupTasks,
                     TimeSpan.FromSeconds(1),
                     _cancellationTokenSource.Token);
-                var metricMessageCount = ((IEnumerable<int>)result.Values).Sum();
+                var metricMessageCount = result.Values.SelectMany(i => i).Sum();
 
                 Console.WriteLine("Writing metrics");
                 WriteMetrics(
