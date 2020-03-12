@@ -81,42 +81,30 @@ namespace MultiPerfClient.Hub
             while (!_cancellationTokenSource.IsCancellationRequested)
             {   //  Represent a loop in all clients
                 var loopWatch = new Stopwatch();
-                var metricMessageCount = 0;
-                var pauseCount = 0;
-                var iterations = 0;
                 var clientGroups =
                     TaskRunner.Segment(allClients, _configuration.MessagesPerSecond);
+                var clientGroupTasks = from c in clientGroups
+                                       let tasks = from client in c
+                                                   //  Send a message to each client
+                                                   select SendMessageToOneClientAsync(client)
+                                       select Task.WhenAll(tasks);
 
                 Console.WriteLine($"Sending 1 message to each {allClients.Length} devices...");
                 loopWatch.Start();
 
-                //  Send a message to each client
-                foreach (var clientGroup in clientGroups)
-                {
-                    var groupWatch = new Stopwatch();
-                    var tasks = from client in clientGroup
-                                select SendMessageToOneClientAsync(client);
+                var result = await TaskRunner.TempoRunAsync(
+                    clientGroupTasks,
+                    TimeSpan.FromSeconds(1),
+                    _cancellationTokenSource.Token);
+                var metricMessageCount = ((IEnumerable<int>)result.Values).Sum();
 
-                    groupWatch.Start();
-
-                    var results = await Task.WhenAll(tasks);
-                    var requiredPause = TimeSpan.FromSeconds(1) - groupWatch.Elapsed;
-
-                    ++iterations;
-                    metricMessageCount += results.Sum();
-                    if (requiredPause > TimeSpan.Zero)
-                    {
-                        ++pauseCount;
-                        await Task.Delay(requiredPause, _cancellationTokenSource.Token);
-                    }
-                }
                 Console.WriteLine("Writing metrics");
                 WriteMetrics(
                     allClients,
                     context,
                     metricMessageCount,
-                    pauseCount,
-                    iterations,
+                    result.PauseCount,
+                    result.IterationCount,
                     loopWatch.Elapsed.TotalSeconds);
             }
         }
@@ -198,9 +186,15 @@ namespace MultiPerfClient.Hub
             var uniqueCode = Guid.NewGuid().GetHashCode().ToString("x8");
             var ids = (from i in Enumerable.Range(0, _configuration.DeviceCount)
                        select $"{Environment.MachineName}.{uniqueCode}.{i}").ToArray();
+            //  Avoid throttling on registration
+            var segments = TaskRunner.Segment(ids, _configuration.RegistrationsPerSecond);
+            var tasks = from s in segments
+                        select RegisterBatchDeviceAsync(registryManager, s);
 
-            //  Register devices in one batch
-            await RegisterBatchDeviceAsync(registryManager, ids);
+            await TaskRunner.TempoRunAsync(
+                tasks,
+                TimeSpan.FromSeconds(1),
+                _cancellationTokenSource.Token);
 
             return ids;
         }
@@ -226,8 +220,6 @@ namespace MultiPerfClient.Hub
 
                 if (result.IsSuccessful)
                 {
-                    await Task.Delay(TimeSpan.FromSeconds(1));
-
                     return ids;
                 }
                 else

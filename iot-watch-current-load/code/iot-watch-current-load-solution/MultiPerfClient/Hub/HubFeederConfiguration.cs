@@ -10,6 +10,8 @@ namespace MultiPerfClient.Hub
             var connectionString = Environment.GetEnvironmentVariable("IOT_CONN_STRING");
             var deviceCountText = Environment.GetEnvironmentVariable("DEVICE_COUNT");
             int deviceCount;
+            var registrationsPerSecondText = Environment.GetEnvironmentVariable("REGISTRATIONS_PER_SECOND");
+            int registrationsPerSecond;
             var messagesPerSecondText = Environment.GetEnvironmentVariable("MESSAGES_PER_SECOND");
             int messagesPerSecond;
             var messageSizeText = Environment.GetEnvironmentVariable("MESSAGE_SIZE_IN_KB");
@@ -26,6 +28,14 @@ namespace MultiPerfClient.Hub
             else if (!int.TryParse(deviceCountText, out deviceCount))
             {
                 throw new ArgumentException("Env Var isn't an integer", "DEVICE_COUNT");
+            }
+            else if (string.IsNullOrWhiteSpace(registrationsPerSecondText))
+            {
+                throw new ArgumentNullException("Environment variable missing", "REGISTRATIONS_PER_SECOND");
+            }
+            else if (!int.TryParse(registrationsPerSecondText, out registrationsPerSecond))
+            {
+                throw new ArgumentException("Env Var isn't an integer", "REGISTRATIONS_PER_SECOND");
             }
             else if (string.IsNullOrWhiteSpace(messagesPerSecondText))
             {
@@ -45,6 +55,7 @@ namespace MultiPerfClient.Hub
             }
             ConnectionString = connectionString;
             DeviceCount = deviceCount;
+            RegistrationsPerSecond = registrationsPerSecond;
             MessagesPerSecond = messagesPerSecond;
             MessageSize = messageSize;
         }
@@ -53,6 +64,8 @@ namespace MultiPerfClient.Hub
 
         public int DeviceCount { get; }
 
+        public int RegistrationsPerSecond { get; }
+        
         public int MessagesPerSecond { get; }
 
         public int MessageSize { get; }
