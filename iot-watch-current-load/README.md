@@ -17,14 +17,31 @@ Container:  https://hub.docker.com/repository/docker/vplauzon/perf-streaming
 kubectl apply -f service.yaml
 
 ```sql
+//  Metrics
 customMetrics
 | where timestamp > ago(10m)
-| sort by timestamp desc, cloud_RoleName asc
+| project-reorder cloud_RoleInstance
+| sort by timestamp desc, cloud_RoleInstance asc
 
+//  Message-count by bin and instances
 customMetrics
-| where timestamp > ago(1h)
+| where timestamp > ago(10m)
 | where name=="message-count"
-| summarize throughputPerSecond=sum(valueSum)/60.0 by bin(timestamp, 1m)
+| summarize messages=sum(valueSum) by bin(timestamp, 1m), cloud_RoleInstance
+| sort by timestamp desc, cloud_RoleInstance asc
+
+//  Chart, per second
+customMetrics
+| where timestamp > ago(30m)
+| where name=="message-count"
+| summarize throughputPerSec=sum(valueSum)/60.0 by bin(timestamp, 1m)
+| render columnchart 
+
+//  Chart, per minute
+customMetrics
+| where timestamp > ago(30m)
+| where name=="message-count"
+| summarize throughputPerMin=sum(valueSum) by bin(timestamp, 1m)
 | render columnchart 
 
 exceptions 

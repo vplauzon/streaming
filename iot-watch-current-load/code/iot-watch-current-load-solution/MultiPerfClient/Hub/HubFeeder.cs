@@ -6,7 +6,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -18,7 +17,6 @@ namespace MultiPerfClient.Hub
     /// </summary>
     internal class HubFeeder
     {
-        private const int CONCURRENT_CALLS = 5000;
         private readonly CancellationTokenSource _cancellationTokenSource = new CancellationTokenSource();
         private readonly HubFeederConfiguration _configuration = new HubFeederConfiguration();
         private readonly TelemetryClient _telemetryClient;
@@ -100,11 +98,8 @@ namespace MultiPerfClient.Hub
                                 select SendMessageToOneClientAsync(client);
 
                     groupWatch.Start();
-
-                    //  Avoid having timeout for great quantity of devices
-                    var results = await TaskRunner.RunAsync(
-                        tasks,
-                        CONCURRENT_CALLS);
+                    
+                    var results = await Task.WhenAll(tasks);
                     var requiredPause = TimeSpan.FromSeconds(1) - groupWatch.Elapsed;
 
                     ++iterations;
@@ -209,7 +204,7 @@ namespace MultiPerfClient.Hub
                         select RegisterBatchDeviceAsync(registryManager, segment);
 
             //  Avoid having timeout for great quantity of devices
-            await TaskRunner.RunAsync(tasks, CONCURRENT_CALLS);
+            await Task.WhenAll(tasks);
 
             return ids;
         }
