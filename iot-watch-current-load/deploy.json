@@ -2,11 +2,28 @@
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
+    "deploymentType": {
+      "type": "string",
+      "metadata": {
+        "description": "Type of deployment to make"
+      },
+      "allowedValues": [
+        "iotOnly",
+        "cosmos",
+        "adx",
+        "all"
+      ],
+      "defaultValue": "iotOnly"
+    }
   },
   "variables": {
     "Unique ID": "[uniqueString(concat(resourceGroup().id, 'iot'))]",
     "Hub Name": "[concat('iot-hub-', variables('Unique ID'))]",
-    "App Insights Name": "[concat('app-insights-', variables('Unique ID'))]"
+    "App Insights Name": "[concat('app-insights-', variables('Unique ID'))]",
+    "Streaming Job Name": "[concat('streaming-', variables('Unique ID'))]",
+    "Cosmos Account Name": "[concat('cosmos-', variables('Unique ID'))]",
+    "Cosmos Db Name": "operationDb",
+    "Cosmos Container": "telemetry"
   },
   "resources": [
     {
@@ -83,6 +100,106 @@
         "Application_Type": "web"
       },
       "dependsOn": [
+      ]
+    },
+    {
+      "condition": "[or(equals('cosmos', parameters('deploymentType')), equals('all', parameters('deploymentType')))]",
+      "type": "Microsoft.StreamAnalytics/StreamingJobs",
+      "apiVersion": "2016-03-01",
+      "name": "[variables('Streaming Job Name')]",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Devices/IotHubs', variables('Hub Name'))]"
+      ],
+      "properties": {
+        "sku": {
+          "name": "standard"
+        },
+        "outputStartMode": "JobStartTime",
+        "outputErrorPolicy": "stop",
+        "eventsOutOfOrderPolicy": "adjust",
+        "eventsOutOfOrderMaxDelayInSeconds": 0,
+        "eventsLateArrivalMaxDelayInSeconds": 5,
+        "dataLocale": "en-US",
+        "inputs": [
+        ],
+        "outputs": [
+        ],
+        "transformation": {
+          "name": "Transformation",
+          "properties": {
+            "streamingUnits": 1,
+            "query": ""
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.DocumentDB/databaseAccounts",
+      "apiVersion": "2019-12-12",
+      "kind": "GlobalDocumentDB",
+      "name": "[variables('Cosmos Account Name')]",
+      "tags": {
+        "defaultExperience": "DocumentDB"
+      },
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "name": "[variables('Cosmos Account Name')]",
+        "databaseAccountOfferType": "Standard",
+        "consistencyPolicy": {
+          "defaultConsistencyLevel": "Eventual",
+          "maxStalenessPrefix": "10",
+          "maxIntervalInSeconds": "5"
+        }
+      },
+      "resources": [
+        {
+          "type": "sqlDatabases",
+          "apiVersion": "2019-12-12",
+          "name": "[variables('Cosmos Db Name')]",
+          "dependsOn": [
+            "[resourceId('Microsoft.DocumentDB/databaseAccounts', variables('Cosmos Account Name'))]"
+          ],
+          "properties": {
+            "resource": {
+              "id": "[variables('Cosmos Db Name')]"
+            },
+            "options": {
+            }
+          },
+          "resources": [
+            {
+              "name": "[variables('Cosmos Container')]",
+              "type": "containers",
+              "apiVersion": "2019-12-12",
+              "dependsOn": [
+                "[resourceId('Microsoft.DocumentDB/databaseAccounts/sqlDatabases', variables('Cosmos Account Name'), variables('Cosmos Db Name'))]"
+              ],
+              "properties": {
+                "resource": {
+                  "id": "[variables('Cosmos Container')]",
+                  "partitionKey": {
+                    "paths": [
+                      "/deviceId"
+                    ],
+                    "kind": "Hash"
+                  },
+                  "indexingPolicy": {
+                    "indexingMode": "consistent",
+                    "includedPaths": [
+                      {
+                        "path": "/*"
+                      }
+                    ],
+                    "excludedPaths": [
+                    ]
+                  },
+                  "defaultTtl": 3600
+                }
+              }
+            }
+          ]
+        }
       ]
     }
   ],
