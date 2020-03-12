@@ -98,7 +98,7 @@ namespace MultiPerfClient.Hub
                                 select SendMessageToOneClientAsync(client);
 
                     groupWatch.Start();
-                    
+
                     var results = await Task.WhenAll(tasks);
                     var requiredPause = TimeSpan.FromSeconds(1) - groupWatch.Elapsed;
 
@@ -198,13 +198,9 @@ namespace MultiPerfClient.Hub
             var uniqueCode = Guid.NewGuid().GetHashCode().ToString("x8");
             var ids = (from i in Enumerable.Range(0, _configuration.DeviceCount)
                        select $"{Environment.MachineName}.{uniqueCode}.{i}").ToArray();
-            var idSegments = TaskRunner.Segment(ids, 80);
-            //  Register devices in batches
-            var tasks = from segment in idSegments
-                        select RegisterBatchDeviceAsync(registryManager, segment);
 
-            //  Avoid having timeout for great quantity of devices
-            await Task.WhenAll(tasks);
+            //  Register devices in one batch
+            await RegisterBatchDeviceAsync(registryManager, ids);
 
             return ids;
         }
