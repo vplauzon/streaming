@@ -64,7 +64,7 @@ namespace MultiPerfClient.Hub
                 while (!cancellationToken.IsCancellationRequested)
                 {
                     var client = NextClient(allClients);
-                    var timeoutSource = new CancellationTokenSource(TimeSpan.FromSeconds(1));
+                    var timeoutSource = new CancellationTokenSource(MESSAGE_TIMEOUT);
                     var combinedSource = CancellationTokenSource.CreateLinkedTokenSource(
                         cancellationToken,
                         timeoutSource.Token);
@@ -167,6 +167,7 @@ namespace MultiPerfClient.Hub
         #endregion
 
         private static readonly TimeSpan TELEMETRY_INTERVAL = TimeSpan.FromSeconds(20);
+        private static readonly TimeSpan MESSAGE_TIMEOUT = TimeSpan.FromSeconds(2);
 
         private readonly CancellationTokenSource _cancellationTokenSource = new CancellationTokenSource();
         private readonly HubFeederConfiguration _configuration = new HubFeederConfiguration();
@@ -243,7 +244,7 @@ namespace MultiPerfClient.Hub
 
             await TaskRunner.TempoRunAsync(
                 tasks,
-                TimeSpan.FromSeconds(1),
+                MESSAGE_TIMEOUT,
                 _cancellationTokenSource.Token);
 
             return ids;
