@@ -270,6 +270,10 @@ namespace MultiPerfClient.Hub
 
                 if (result.IsSuccessful)
                 {
+                    _telemetryClient.TrackMetric(
+                        "registration-count",
+                        ids.Length);
+
                     return ids;
                 }
                 else

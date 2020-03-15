@@ -27,8 +27,8 @@ spec:
           value: "6000"
         - name: REGISTRATIONS_PER_SECOND
           value: "100"
-        - name: MESSAGES_PER_SECOND
-          value: "6000"
+        - name: CONCURRENT_MESSAGES_COUNT
+          value: "1"
         - name: MESSAGE_SIZE_IN_KB
           value: "3"
         resources:
