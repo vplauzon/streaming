@@ -63,14 +63,14 @@ namespace MultiPerfClient.Hub
 
                 while (!cancellationToken.IsCancellationRequested)
                 {
-                    var client = NextClient(allClients);
-                    var timeoutSource = new CancellationTokenSource(MESSAGE_TIMEOUT);
-                    var combinedSource = CancellationTokenSource.CreateLinkedTokenSource(
-                        cancellationToken,
-                        timeoutSource.Token);
-
                     using (var message = new Microsoft.Azure.Devices.Client.Message(payload))
                     {
+                        var client = NextClient(allClients);
+                        var timeoutSource = new CancellationTokenSource(MESSAGE_TIMEOUT);
+                        var combinedSource = CancellationTokenSource.CreateLinkedTokenSource(
+                            cancellationToken,
+                            timeoutSource.Token);
+
                         try
                         {
                             var sendTask = client.SendEventAsync(message, combinedSource.Token);
@@ -139,7 +139,7 @@ namespace MultiPerfClient.Hub
         #endregion
 
         private static readonly TimeSpan TELEMETRY_INTERVAL = TimeSpan.FromSeconds(20);
-        private static readonly TimeSpan MESSAGE_TIMEOUT = TimeSpan.FromSeconds(2);
+        private static readonly TimeSpan MESSAGE_TIMEOUT = TimeSpan.FromSeconds(5);
 
         private readonly CancellationTokenSource _cancellationTokenSource = new CancellationTokenSource();
         private readonly HubFeederConfiguration _configuration = new HubFeederConfiguration();
