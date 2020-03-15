@@ -131,37 +131,9 @@ namespace MultiPerfClient.Hub
 
             private DeviceClient NextClient(DeviceClient[] allClients)
             {
-                var nextIndex = Interlocked.Increment(ref _clientIndex);
+                var nextIndex = Interlocked.Increment(ref _clientIndex) % _configuration.DeviceCount;
 
-                if (nextIndex < _configuration.DeviceCount)
-                {
-                    return allClients[nextIndex];
-                }
-                else
-                {   //  We need to wrap around
-                    //  Optimistic lock:  we no longer increment, so eventually one thread will reset index
-                    while (true)
-                    {   //  Re-read the index in case it has changed
-                        var currentIndex = _clientIndex;
-
-                        if (currentIndex >= _configuration.DeviceCount)
-                        {
-                            //  True iif this thread 'won' and we switch the index to zero
-                            if (Interlocked.CompareExchange(ref _clientIndex, 0, currentIndex) == currentIndex)
-                            {
-                                return allClients[0];
-                            }
-                            else
-                            {
-                                //  Try again
-                            }
-                        }
-                        else
-                        {   //  Some other thread has resetted the index
-                            return NextClient(allClients);
-                        }
-                    }
-                }
+                return allClients[nextIndex];
             }
         }
         #endregion

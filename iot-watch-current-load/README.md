@@ -20,12 +20,14 @@ kubectl apply -f hub-feeder.yaml
 //  Metrics
 customMetrics
 | where timestamp > ago(10m)
+| where cloud_RoleName == "HUB-FEEDER"
 | project-reorder cloud_RoleInstance
 | sort by timestamp desc, cloud_RoleInstance asc
 
 //  Message-count by bin and instances
 customMetrics
 | where timestamp > ago(10m)
+| where cloud_RoleName == "HUB-FEEDER"
 | where name=="message-count"
 | summarize messages=sum(valueSum) by bin(timestamp, 1m), cloud_RoleInstance
 | sort by timestamp desc, cloud_RoleInstance asc
@@ -33,6 +35,7 @@ customMetrics
 //  Chart, per second
 customMetrics
 | where timestamp > ago(30m)
+| where cloud_RoleName == "HUB-FEEDER"
 | where name=="message-count"
 | summarize throughputPerSec=sum(valueSum)/60.0 by bin(timestamp, 1m)
 | render columnchart 
@@ -40,12 +43,14 @@ customMetrics
 //  Chart, per minute
 customMetrics
 | where timestamp > ago(30m)
+| where cloud_RoleName == "HUB-FEEDER"
 | where name=="message-count"
 | summarize throughputPerMin=sum(valueSum) by bin(timestamp, 1m)
 | render columnchart 
 
 exceptions 
 | where timestamp > ago(10m)
+| where cloud_RoleName == "HUB-FEEDER"
 | sort by timestamp desc
 | limit 10
 ```
