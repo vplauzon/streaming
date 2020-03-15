@@ -1,24 +1,12 @@
 {
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
-  "parameters": {
-    "deploymentType": {
-      "type": "string",
-      "metadata": {
-        "description": "Type of deployment to make"
-      },
-      "allowedValues": [
-        "iotOnly",
-        "cosmos",
-        "adx",
-        "all"
-      ],
-      "defaultValue": "iotOnly"
-    }
-  },
+  "parameters": {},
   "variables": {
     "Unique ID": "[uniqueString(concat(resourceGroup().id, 'iot'))]",
     "Hub Name": "[concat('iot-hub-', variables('Unique ID'))]",
+    "Hub Writer": "iothubowner",
+    "Hub Reader": "hubReader",
     "App Insights Name": "[concat('app-insights-', variables('Unique ID'))]",
     "Streaming Job Name": "[concat('streaming-', variables('Unique ID'))]",
     "Cosmos Account Name": "[concat('cosmos-', variables('Unique ID'))]",
@@ -40,6 +28,16 @@
         "capacity": 1
       },
       "properties": {
+        "authorizationPolicies": [
+          {
+            "keyName": "[variables('Hub Writer')]",
+            "rights": "RegistryWrite, ServiceConnect, DeviceConnect"
+          },
+          {
+            "keyName": "[variables('Hub Reader')]",
+            "rights": "RegistryRead, ServiceConnect"
+          }
+        ],
         "ipFilterRules": [
         ],
         "eventHubEndpoints": {
@@ -101,38 +99,6 @@
       },
       "dependsOn": [
       ]
-    },
-    {
-      "condition": "[or(equals('cosmos', parameters('deploymentType')), equals('all', parameters('deploymentType')))]",
-      "type": "Microsoft.StreamAnalytics/StreamingJobs",
-      "apiVersion": "2016-03-01",
-      "name": "[variables('Streaming Job Name')]",
-      "location": "[resourceGroup().location]",
-      "dependsOn": [
-        "[resourceId('Microsoft.Devices/IotHubs', variables('Hub Name'))]"
-      ],
-      "properties": {
-        "sku": {
-          "name": "standard"
-        },
-        "outputStartMode": "JobStartTime",
-        "outputErrorPolicy": "stop",
-        "eventsOutOfOrderPolicy": "adjust",
-        "eventsOutOfOrderMaxDelayInSeconds": 0,
-        "eventsLateArrivalMaxDelayInSeconds": 5,
-        "dataLocale": "en-US",
-        "inputs": [
-        ],
-        "outputs": [
-        ],
-        "transformation": {
-          "name": "Transformation",
-          "properties": {
-            "streamingUnits": 1,
-            "query": ""
-          }
-        }
-      }
     },
     {
       "type": "Microsoft.DocumentDB/databaseAccounts",
@@ -201,8 +167,80 @@
           ]
         }
       ]
+    },
+    {
+      "type": "Microsoft.StreamAnalytics/StreamingJobs",
+      "apiVersion": "2016-03-01",
+      "name": "[variables('Streaming Job Name')]",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Devices/IotHubs', variables('Hub Name'))]",
+        "[resourceId('Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers', variables('Cosmos Account Name'), variables('Cosmos Db Name'), variables('Cosmos Container'))]"
+      ],
+      "properties": {
+        "sku": {
+          "name": "standard"
+        },
+        "outputStartMode": "JobStartTime",
+        "outputErrorPolicy": "stop",
+        "eventsOutOfOrderPolicy": "adjust",
+        "eventsOutOfOrderMaxDelayInSeconds": 0,
+        "eventsLateArrivalMaxDelayInSeconds": 5,
+        "dataLocale": "en-US",
+        "inputs": [
+          {
+            "name": "hub",
+            "properties": {
+              "type": "Stream",
+              "datasource": {
+                "type": "Microsoft.Devices/IotHubs",
+                "properties": {
+                  "iotHubNamespace": "[variables('Hub Name')]",
+                  "sharedAccessPolicyName": "[variables('Hub Reader')]",
+                  "sharedAccessPolicyKey": "[listKeys(resourceId('Microsoft.Devices/IotHubs', variables('Hub Name')), '2019-11-04').value[1].primaryKey]",
+                  "endpoint": "messages/events",
+                  "consumerGroupName": "$Default"
+                }
+              },
+              "serialization": {
+                "type": "Json",
+                "properties": {
+                  "encoding": "UTF8"
+                }
+              }
+            }
+          }
+        ],
+        "outputs": [
+          {
+            "name": "cosmos",
+            "properties": {
+              "datasource": {
+                "type": "Microsoft.Storage/DocumentDB",
+                "properties": {
+                  "accountId": "[variables('Cosmos Account Name')]",
+                  "database": "[variables('Cosmos Db Name')]",
+                  "collectionNamePattern": "[variables('Cosmos Container')]",
+                  "accountKey": "[listKeys(resourceId('Microsoft.DocumentDB/databaseAccounts', variables('Cosmos Account Name')), '2019-12-12').primaryMasterKey]"
+                }
+              }
+            }
+          }
+        ],
+        "transformation": {
+          "name": "Transformation",
+          "properties": {
+            "streamingUnits": 1,
+            "query": "SELECT * INTO cosmos FROM hub"
+          }
+        }
+      }
     }
   ],
   "outputs": {
+    "q": {
+      "type": "object",
+      "value": "[listKeys(resourceId('Microsoft.DocumentDB/databaseAccounts', variables('Cosmos Account Name')), '2019-12-12')]"
+    }
   }
 }

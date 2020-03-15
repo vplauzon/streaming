@@ -12,8 +12,8 @@ namespace MultiPerfClient.Hub
             int deviceCount;
             var registrationsPerSecondText = Environment.GetEnvironmentVariable("REGISTRATIONS_PER_SECOND");
             int registrationsPerSecond;
-            var messagesPerSecondText = Environment.GetEnvironmentVariable("MESSAGES_PER_SECOND");
-            int messagesPerSecond;
+            var concurrentMessagesCountText = Environment.GetEnvironmentVariable("CONCURRENT_MESSAGES_COUNT");
+            int concurrentMessagesCount;
             var messageSizeText = Environment.GetEnvironmentVariable("MESSAGE_SIZE_IN_KB");
             int messageSize;
 
@@ -37,13 +37,13 @@ namespace MultiPerfClient.Hub
             {
                 throw new ArgumentException("Env Var isn't an integer", "REGISTRATIONS_PER_SECOND");
             }
-            else if (string.IsNullOrWhiteSpace(messagesPerSecondText))
+            else if (string.IsNullOrWhiteSpace(concurrentMessagesCountText))
             {
-                throw new ArgumentNullException("Environment variable missing", "MESSAGES_PER_SECOND");
+                throw new ArgumentNullException("Environment variable missing", "CONCURRENT_MESSAGES_COUNT");
             }
-            else if (!int.TryParse(messagesPerSecondText, out messagesPerSecond))
+            else if (!int.TryParse(concurrentMessagesCountText, out concurrentMessagesCount))
             {
-                throw new ArgumentException("Env Var isn't an integer", "MESSAGES_PER_SECOND");
+                throw new ArgumentException("Env Var isn't an integer", "CONCURRENT_MESSAGES_COUNT");
             }
             else if (string.IsNullOrWhiteSpace(messageSizeText))
             {
@@ -56,7 +56,7 @@ namespace MultiPerfClient.Hub
             ConnectionString = connectionString;
             DeviceCount = deviceCount;
             RegistrationsPerSecond = registrationsPerSecond;
-            MessagesPerSecond = messagesPerSecond;
+            ConcurrentMessagesCount = concurrentMessagesCount;
             MessageSize = messageSize;
         }
 
@@ -66,7 +66,7 @@ namespace MultiPerfClient.Hub
 
         public int RegistrationsPerSecond { get; }
         
-        public int MessagesPerSecond { get; }
+        public int ConcurrentMessagesCount { get; }
 
         public int MessageSize { get; }
     }

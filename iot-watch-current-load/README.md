@@ -14,7 +14,7 @@ Sending telemetry:  https://docs.microsoft.com/en-us/azure/iot-hub/quickstart-se
 
 Container:  https://hub.docker.com/repository/docker/vplauzon/perf-streaming
 
-kubectl apply -f service.yaml
+kubectl apply -f hub-feeder.yaml
 
 ```sql
 //  Metrics
