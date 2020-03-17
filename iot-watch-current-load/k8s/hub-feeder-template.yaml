@@ -24,11 +24,11 @@ spec:
         - name: IOT_CONN_STRING
           value: "{iot-connection-string}"
         - name: DEVICE_COUNT
-          value: "6000"
+          value: "5000"
         - name: REGISTRATIONS_PER_SECOND
           value: "100"
         - name: CONCURRENT_MESSAGES_COUNT
-          value: "1"
+          value: "5000"
         - name: MESSAGE_SIZE_IN_KB
           value: "3"
         resources:

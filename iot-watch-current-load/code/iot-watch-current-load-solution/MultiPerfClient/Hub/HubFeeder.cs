@@ -71,6 +71,8 @@ namespace MultiPerfClient.Hub
                             cancellationToken,
                             timeoutSource.Token);
 
+                        message.ContentEncoding = "utf-8";
+                        message.ContentType = "application/json";
                         try
                         {
                             var sendTask = client.SendEventAsync(message, combinedSource.Token);
