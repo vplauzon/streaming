@@ -202,6 +202,7 @@
         "eventsOutOfOrderPolicy": "adjust",
         "eventsOutOfOrderMaxDelayInSeconds": 0,
         "eventsLateArrivalMaxDelayInSeconds": 5,
+        "compatibilityLevel": "1.2",
         "dataLocale": "en-US",
         "inputs": [
           {
