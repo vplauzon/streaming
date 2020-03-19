@@ -6,12 +6,12 @@
   "variables": {
     "App Insights Name": "[concat('app-insights-', variables('Unique ID'))]",
     "Log Analytics Name": "[concat('log-analytics-', variables('Unique ID'))]",
+    "Log Analytics Diagnostic Name": "log-analytics",
     "Unique ID": "[uniqueString(concat(resourceGroup().id, 'iot'))]",
     "Hub Name": "[concat('iot-hub-', variables('Unique ID'))]",
     "Hub Writer": "iothubowner",
     "Hub Reader": "hubReader",
     "Streaming Job Name": "[concat('streaming-', variables('Unique ID'))]",
-    "Streaming Job Diagnostic Name": "log-analytics",
     "Cosmos Account Name": "[concat('cosmos-', variables('Unique ID'))]",
     "Cosmos Db Name": "operationDb",
     "Cosmos Container": "telemetry"
@@ -114,7 +114,86 @@
           }
         },
         "features": "None"
-      }
+      },
+      "resources": [
+        {
+          "type": "providers/diagnosticSettings",
+          "apiVersion": "2017-05-01-preview",
+          "name": "[concat('microsoft.insights/', variables('Log Analytics Diagnostic Name'))]",
+          "dependsOn": [
+            "[resourceId('Microsoft.Devices/IotHubs', variables('Hub Name'))]",
+            "[resourceId('Microsoft.OperationalInsights/workspaces', variables('Log Analytics Name'))]"
+          ],
+          "properties": {
+            "name": "[variables('Log Analytics Diagnostic Name')]",
+            "workspaceId": "[resourceId('Microsoft.OperationalInsights/workspaces', variables('Log Analytics Name'))]",
+            "logs": [
+              {
+                "category": "Connections",
+                "enabled": true
+              },
+              {
+                "category": "DeviceTelemetry",
+                "enabled": true
+              },
+              {
+                "category": "C2DCommands",
+                "enabled": true
+              },
+              {
+                "category": "DeviceIdentityOperations",
+                "enabled": true
+              },
+              {
+                "category": "FileUploadOperations",
+                "enabled": true
+              },
+              {
+                "category": "Routes",
+                "enabled": true
+              },
+              {
+                "category": "D2CTwinOperations",
+                "enabled": true
+              },
+              {
+                "category": "C2DTwinOperations",
+                "enabled": true
+              },
+              {
+                "category": "TwinQueries",
+                "enabled": true
+              },
+              {
+                "category": "JobsOperations",
+                "enabled": true
+              },
+              {
+                "category": "DirectMethods",
+                "enabled": true
+              },
+              {
+                "category": "DistributedTracing",
+                "enabled": true
+              },
+              {
+                "category": "Configurations",
+                "enabled": true
+              },
+              {
+                "category": "DeviceStreams",
+                "enabled": true
+              }
+            ],
+            "metrics": [
+              {
+                "category": "AllMetrics",
+                "enabled": true
+              }
+            ]
+          }
+        }
+      ]
     },
     {
       "type": "Microsoft.DocumentDB/databaseAccounts",
@@ -178,9 +257,73 @@
                   },
                   "defaultTtl": 3600
                 }
-              }
+              },
+              "resources": [
+                {
+                  "type": "throughputSettings",
+                  "apiVersion": "2020-03-01",
+                  "name": "default",
+                  "dependsOn": [
+                    "[resourceId('Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers', variables('Cosmos Account Name'), variables('Cosmos Db Name'), variables('Cosmos Container'))]"
+                  ],
+                  "properties": {
+                    "resource": {
+                      "throughput": 4000
+                    }
+                  }
+                }
+              ]
             }
           ]
+        },
+        {
+          "type": "providers/diagnosticSettings",
+          "apiVersion": "2017-05-01-preview",
+          "name": "[concat('microsoft.insights/', variables('Log Analytics Diagnostic Name'))]",
+          "dependsOn": [
+            "[resourceId('Microsoft.DocumentDB/databaseAccounts', variables('Cosmos Account Name'))]",
+            "[resourceId('Microsoft.OperationalInsights/workspaces', variables('Log Analytics Name'))]"
+          ],
+          "properties": {
+            "name": "[variables('Log Analytics Diagnostic Name')]",
+            "workspaceId": "[resourceId('Microsoft.OperationalInsights/workspaces', variables('Log Analytics Name'))]",
+            "logs": [
+              {
+                "category": "DataPlaneRequests",
+                "enabled": true
+              },
+              {
+                "category": "MongoRequests",
+                "enabled": true
+              },
+              {
+                "category": "QueryRuntimeStatistics",
+                "enabled": true
+              },
+              {
+                "category": "PartitionKeyStatistics",
+                "enabled": true
+              },
+              {
+                "category": "PartitionKeyRUConsumption",
+                "enabled": true
+              },
+              {
+                "category": "ControlPlaneRequests",
+                "enabled": true
+              },
+              {
+                "category": "CassandraRequests",
+                "enabled": true
+              }
+            ],
+            "metrics": [
+              {
+                "category": "Requests",
+                "enabled": true
+              }
+            ]
+          }
         }
       ]
     },
@@ -256,13 +399,13 @@
         {
           "type": "providers/diagnosticSettings",
           "apiVersion": "2017-05-01-preview",
-          "name": "[concat('microsoft.insights/', variables('Streaming Job Diagnostic Name'))]",
+          "name": "[concat('microsoft.insights/', variables('Log Analytics Diagnostic Name'))]",
           "dependsOn": [
             "[resourceId('Microsoft.StreamAnalytics/StreamingJobs', variables('Streaming Job Name'))]",
             "[resourceId('Microsoft.OperationalInsights/workspaces', variables('Log Analytics Name'))]"
           ],
           "properties": {
-            "name": "[variables('Streaming Job Diagnostic Name')]",
+            "name": "[variables('Log Analytics Diagnostic Name')]",
             "workspaceId": "[resourceId('Microsoft.OperationalInsights/workspaces', variables('Log Analytics Name'))]",
             "logs": [
               {
