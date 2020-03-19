@@ -1,19 +1,49 @@
 {
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
-  "parameters": {},
+  "parameters": {
+  },
   "variables": {
+    "App Insights Name": "[concat('app-insights-', variables('Unique ID'))]",
+    "Log Analytics Name": "[concat('log-analytics-', variables('Unique ID'))]",
     "Unique ID": "[uniqueString(concat(resourceGroup().id, 'iot'))]",
     "Hub Name": "[concat('iot-hub-', variables('Unique ID'))]",
     "Hub Writer": "iothubowner",
     "Hub Reader": "hubReader",
-    "App Insights Name": "[concat('app-insights-', variables('Unique ID'))]",
     "Streaming Job Name": "[concat('streaming-', variables('Unique ID'))]",
+    "Streaming Job Diagnostic Name": "log-analytics",
     "Cosmos Account Name": "[concat('cosmos-', variables('Unique ID'))]",
     "Cosmos Db Name": "operationDb",
     "Cosmos Container": "telemetry"
   },
   "resources": [
+    {
+      "type": "Microsoft.Insights/components",
+      "name": "[variables('App Insights Name')]",
+      "apiVersion": "2015-05-01",
+      "location": "[resourceGroup().location]",
+      "tags": {
+      },
+      "kind": "web",
+      "properties": {
+        "Application_Type": "web"
+      },
+      "dependsOn": [
+      ]
+    },
+    {
+      "type": "Microsoft.OperationalInsights/workspaces",
+      "name": "[variables('Log Analytics Name')]",
+      "apiVersion": "2015-11-01-preview",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "sku": {
+          "name": "PerGB2018"
+        }
+      },
+      "dependsOn": [
+      ]
+    },
     {
       "type": "Microsoft.Devices/IotHubs",
       "apiVersion": "2019-11-04",
@@ -85,20 +115,6 @@
         },
         "features": "None"
       }
-    },
-    {
-      "type": "Microsoft.Insights/components",
-      "name": "[variables('App Insights Name')]",
-      "apiVersion": "2015-05-01",
-      "location": "[resourceGroup().location]",
-      "tags": {
-      },
-      "kind": "web",
-      "properties": {
-        "Application_Type": "web"
-      },
-      "dependsOn": [
-      ]
     },
     {
       "type": "Microsoft.DocumentDB/databaseAccounts",
@@ -231,10 +247,45 @@
           "name": "Transformation",
           "properties": {
             "streamingUnits": 1,
-            "query": "SELECT * INTO cosmos FROM hub"
+            "query": "SELECT IoTHub.ConnectionDeviceId AS deviceId, * INTO cosmos FROM hub PARTITION BY PartitionId"
           }
         }
-      }
+      },
+      "resources": [
+        {
+          "type": "providers/diagnosticSettings",
+          "apiVersion": "2017-05-01-preview",
+          "name": "[concat('microsoft.insights/', variables('Streaming Job Diagnostic Name'))]",
+          "dependsOn": [
+            "[resourceId('Microsoft.StreamAnalytics/StreamingJobs', variables('Streaming Job Name'))]",
+            "[resourceId('Microsoft.OperationalInsights/workspaces', variables('Log Analytics Name'))]"
+          ],
+          "properties": {
+            "name": "[variables('Streaming Job Diagnostic Name')]",
+            "workspaceId": "[resourceId('Microsoft.OperationalInsights/workspaces', variables('Log Analytics Name'))]",
+            "logs": [
+              {
+                "category": "Execution",
+                "enabled": true
+              },
+              {
+                "category": "Execution",
+                "enabled": true
+              },
+              {
+                "category": "Authoring",
+                "enabled": true
+              }
+            ],
+            "metrics": [
+              {
+                "category": "AllMetrics",
+                "enabled": true
+              }
+            ]
+          }
+        }
+      ]
     }
   ],
   "outputs": {
