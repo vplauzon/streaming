@@ -14,7 +14,8 @@
     "Streaming Job Name": "[concat('streaming-', variables('Unique ID'))]",
     "Cosmos Account Name": "[concat('cosmos-', variables('Unique ID'))]",
     "Cosmos Db Name": "operationDb",
-    "Cosmos Container": "telemetry"
+    "Cosmos Telemetry Container": "telemetry",
+    "Cosmos Device Container": "device"
   },
   "resources": [
     {
@@ -230,7 +231,7 @@
           },
           "resources": [
             {
-              "name": "[variables('Cosmos Container')]",
+              "name": "[variables('Cosmos Telemetry Container')]",
               "type": "containers",
               "apiVersion": "2019-12-12",
               "dependsOn": [
@@ -238,7 +239,7 @@
               ],
               "properties": {
                 "resource": {
-                  "id": "[variables('Cosmos Container')]",
+                  "id": "[variables('Cosmos Telemetry Container')]",
                   "partitionKey": {
                     "paths": [
                       "/deviceId"
@@ -264,11 +265,56 @@
                   "apiVersion": "2020-03-01",
                   "name": "default",
                   "dependsOn": [
-                    "[resourceId('Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers', variables('Cosmos Account Name'), variables('Cosmos Db Name'), variables('Cosmos Container'))]"
+                    "[resourceId('Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers', variables('Cosmos Account Name'), variables('Cosmos Db Name'), variables('Cosmos Telemetry Container'))]"
                   ],
                   "properties": {
                     "resource": {
                       "throughput": 4000
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "name": "[variables('Cosmos Device Container')]",
+              "type": "containers",
+              "apiVersion": "2019-12-12",
+              "dependsOn": [
+                "[resourceId('Microsoft.DocumentDB/databaseAccounts/sqlDatabases', variables('Cosmos Account Name'), variables('Cosmos Db Name'))]"
+              ],
+              "properties": {
+                "resource": {
+                  "id": "[variables('Cosmos Device Container')]",
+                  "partitionKey": {
+                    "paths": [
+                      "/deviceId"
+                    ],
+                    "kind": "Hash"
+                  },
+                  "indexingPolicy": {
+                    "indexingMode": "consistent",
+                    "includedPaths": [
+                      {
+                        "path": "/*"
+                      }
+                    ],
+                    "excludedPaths": [
+                    ]
+                  },
+                  "defaultTtl": 3600
+                }
+              },
+              "resources": [
+                {
+                  "type": "throughputSettings",
+                  "apiVersion": "2020-03-01",
+                  "name": "default",
+                  "dependsOn": [
+                    "[resourceId('Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers', variables('Cosmos Account Name'), variables('Cosmos Db Name'), variables('Cosmos Device Container'))]"
+                  ],
+                  "properties": {
+                    "resource": {
+                      "throughput": 400
                     }
                   }
                 }
@@ -334,7 +380,7 @@
       "location": "[resourceGroup().location]",
       "dependsOn": [
         "[resourceId('Microsoft.Devices/IotHubs', variables('Hub Name'))]",
-        "[resourceId('Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers', variables('Cosmos Account Name'), variables('Cosmos Db Name'), variables('Cosmos Container'))]"
+        "[resourceId('Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers', variables('Cosmos Account Name'), variables('Cosmos Db Name'), variables('Cosmos Telemetry Container'))]"
       ],
       "properties": {
         "sku": {
@@ -345,7 +391,7 @@
         "eventsOutOfOrderPolicy": "adjust",
         "eventsOutOfOrderMaxDelayInSeconds": 0,
         "eventsLateArrivalMaxDelayInSeconds": 5,
-        "compatibilityLevel": "1.2",
+        "compatibilityLevel": "1.1",
         "dataLocale": "en-US",
         "inputs": [
           {
@@ -380,7 +426,7 @@
                 "properties": {
                   "accountId": "[variables('Cosmos Account Name')]",
                   "database": "[variables('Cosmos Db Name')]",
-                  "collectionNamePattern": "[variables('Cosmos Container')]",
+                  "collectionNamePattern": "[variables('Cosmos Telemetry Container')]",
                   "accountKey": "[listKeys(resourceId('Microsoft.DocumentDB/databaseAccounts', variables('Cosmos Account Name')), '2019-12-12').primaryMasterKey]"
                 }
               }
