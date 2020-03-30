@@ -123,6 +123,8 @@ namespace MultiPerfClient.Hub
 
                     writer.Write("{'payload':'");
                     writer.Write(payload.ToArray());
+                    writer.Write(", 'recordedAt': '");
+                    writer.Write(DateTime.Now.ToUniversalTime());
                     writer.Write("'}");
 
                     writer.Flush();

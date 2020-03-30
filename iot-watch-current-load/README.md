@@ -16,6 +16,14 @@ Container:  https://hub.docker.com/repository/docker/vplauzon/perf-streaming
 
 kubectl apply -f hub-feeder.yaml
 
+Limits:
+
+4Kb:  https://docs.microsoft.com/en-us/azure/iot-hub/iot-hub-devguide-quotas-throttling#quotas-and-throttling
+https://docs.microsoft.com/en-us/azure/iot-hub/iot-hub-devguide-quotas-throttling
+https://docs.microsoft.com/en-us/azure/iot-hub/iot-hub-scaling
+
+## Query hub-feeder in App Insights
+
 ```sql
 //  Metrics
 customMetrics
@@ -55,8 +63,38 @@ exceptions
 | limit 10
 ```
 
-Limits:
+##  Query Cosmos DB on Log Analytics
 
-4Kb:  https://docs.microsoft.com/en-us/azure/iot-hub/iot-hub-devguide-quotas-throttling#quotas-and-throttling
-https://docs.microsoft.com/en-us/azure/iot-hub/iot-hub-devguide-quotas-throttling
-https://docs.microsoft.com/en-us/azure/iot-hub/iot-hub-scaling
+//  See https://docs.microsoft.com/en-us/azure/cosmos-db/cosmosdb-monitor-resource-logs#diagnostic-queries
+
+//  Categories
+AzureDiagnostics 
+| where ResourceProvider=="MICROSOFT.DOCUMENTDB" 
+| distinct Category
+
+AzureDiagnostics 
+| where ResourceProvider=="MICROSOFT.DOCUMENTDB" and Category=="PartitionKeyRUConsumption" 
+| where collectionName_s == "telemetry"
+| limit 10
+
+AzureDiagnostics 
+| where ResourceProvider=="MICROSOFT.DOCUMENTDB" and Category=="QueryRuntimeStatistics" 
+
+
+AzureDiagnostics 
+| where ResourceProvider=="MICROSOFT.DOCUMENTDB" and Category=="DataPlaneRequests" 
+| where collectionName_s == "telemetry"
+| where not(OperationName in ("Read", "Query", "Execute", "ReadFeed"))
+//| project collectionName_s 
+| limit 10
+
+//  Metrics
+AzureMetrics
+| where ResourceProvider=="MICROSOFT.DOCUMENTDB"
+| distinct MetricName
+
+AzureMetrics
+| where ResourceProvider=="MICROSOFT.DOCUMENTDB"
+| where MetricName == "TotalRequestUnits"
+| summarize ru=sum(Total) /60 by bin(TimeGenerated, 1m)
+| render columnchart 
