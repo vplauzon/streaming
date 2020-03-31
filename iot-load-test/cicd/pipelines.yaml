@@ -6,7 +6,7 @@ trigger:
     - master
   paths:
     include:
-    - iot-watch-current-load/*
+    - iot-load-test/*
 pr: none
 
 resources:

@@ -29,7 +29,7 @@ spec:
           value: "100"
         - name: CONCURRENT_MESSAGES_COUNT
           value: "5000"
-        - name: MESSAGE_SIZE_IN_KB
+        - name: MESSAGE_SIZE_IN_BYTE
           value: "3"
         resources:
           requests:
