@@ -13,7 +13,7 @@ resources:
 - repo: self
 
 variables:
-  sub-folder:  iot-watch-current-load
+  sub-folder:  iot-load-test
   mainVersion: '0.1'
   tag: '$(mainVersion).$(Build.BuildId)'
   image-name:  vplauzon/perf-streaming

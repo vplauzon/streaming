@@ -63,6 +63,21 @@ exceptions
 | limit 10
 ```
 
+## Query Stream Analytics on Log Analytics
+
+//  Both input and output events:  count per second
+AzureMetrics
+| where ResourceProvider == "MICROSOFT.STREAMANALYTICS"
+| where MetricName == "InputEvents" or MetricName == "OutputEvents" 
+| summarize Count=sum(Count)/60 by MetricName, bin(TimeGenerated, 1m)
+| render timechart 
+
+//  All metrics
+AzureMetrics
+| where ResourceProvider == "MICROSOFT.STREAMANALYTICS"
+| distinct MetricName
+| order by MetricName
+
 ##  Query Cosmos DB on Log Analytics
 
 //  See https://docs.microsoft.com/en-us/azure/cosmos-db/cosmosdb-monitor-resource-logs#diagnostic-queries
