@@ -113,6 +113,7 @@ namespace MultiPerfClient.Hub
                 }
             }
 
+
             private byte[] CreateMessagePayload()
             {
                 using (var stream = new MemoryStream())
