@@ -301,7 +301,7 @@
                     "excludedPaths": [
                     ]
                   },
-                  "defaultTtl": 3600
+                  "defaultTtl": 60
                 }
               },
               "resources": [
