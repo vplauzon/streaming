@@ -73,34 +73,23 @@ SELECT TOP 1 * FROM c ORDER BY c._ts DESC
 
 //  See https://docs.microsoft.com/en-us/azure/cosmos-db/cosmosdb-monitor-resource-logs#diagnostic-queries
 
-//  Categories
+//  All categories
 AzureDiagnostics 
 | where ResourceProvider=="MICROSOFT.DOCUMENTDB" 
 | distinct Category
 
+//  Cost of writes
 AzureDiagnostics 
-| where ResourceProvider=="MICROSOFT.DOCUMENTDB" and Category=="PartitionKeyRUConsumption" 
-| where collectionName_s == "telemetry"
-| limit 10
+| where ResourceProvider=="MICROSOFT.DOCUMENTDB" 
+| where Category=="DataPlaneRequests" 
+| where OperationName == "Execute"
+| project TimeGenerated, requestCharge_s
+| limit 5
 
+//  Cost of writes on chart
 AzureDiagnostics 
-| where ResourceProvider=="MICROSOFT.DOCUMENTDB" and Category=="QueryRuntimeStatistics" 
-
-
-AzureDiagnostics 
-| where ResourceProvider=="MICROSOFT.DOCUMENTDB" and Category=="DataPlaneRequests" 
-| where collectionName_s == "telemetry"
-| where not(OperationName in ("Read", "Query", "Execute", "ReadFeed"))
-//| project collectionName_s 
-| limit 10
-
-//  Metrics
-AzureMetrics
-| where ResourceProvider=="MICROSOFT.DOCUMENTDB"
-| distinct MetricName
-
-AzureMetrics
-| where ResourceProvider=="MICROSOFT.DOCUMENTDB"
-| where MetricName == "TotalRequestUnits"
-| summarize ru=sum(Total) /60 by bin(TimeGenerated, 1m)
-| render columnchart 
+| where ResourceProvider=="MICROSOFT.DOCUMENTDB" 
+| where Category=="DataPlaneRequests" 
+| where OperationName == "Execute"
+| summarize ru=sum(toreal(requestCharge_s))/60 by bin(TimeGenerated, 1m)
+| render timechart 
