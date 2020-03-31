@@ -14,7 +14,7 @@ namespace MultiPerfClient.Hub
             int registrationsPerSecond;
             var concurrentMessagesCountText = Environment.GetEnvironmentVariable("CONCURRENT_MESSAGES_COUNT");
             int concurrentMessagesCount;
-            var messageSizeText = Environment.GetEnvironmentVariable("MESSAGE_SIZE_IN_KB");
+            var messageSizeText = Environment.GetEnvironmentVariable("MESSAGE_SIZE_IN_BYTE");
             int messageSize;
 
             if (string.IsNullOrWhiteSpace(connectionString))
@@ -47,11 +47,11 @@ namespace MultiPerfClient.Hub
             }
             else if (string.IsNullOrWhiteSpace(messageSizeText))
             {
-                throw new ArgumentNullException("Environment variable missing", "MESSAGE_SIZE_IN_KB");
+                throw new ArgumentNullException("Environment variable missing", "MESSAGE_SIZE_IN_BYTE");
             }
             else if (!int.TryParse(messageSizeText, out messageSize))
             {
-                throw new ArgumentException("Env Var isn't an integer", "MESSAGE_SIZE_IN_KB");
+                throw new ArgumentException("Env Var isn't an integer", "MESSAGE_SIZE_IN_BYTE");
             }
             ConnectionString = connectionString;
             DeviceCount = deviceCount;

@@ -1,4 +1,4 @@
-# IoT Watch Current Load test
+# IoT Load test
 
 This is a load test to simulate a bunch of devices pushing telemetry to Azure IoT hub.  The telemetry is then ingested in some data service and random poke are done at the "current" (i.e. most up-to-date) telemetry.
 
@@ -24,40 +24,15 @@ https://docs.microsoft.com/en-us/azure/iot-hub/iot-hub-scaling
 
 ## Query hub-feeder in App Insights
 
-```sql
-//  Metrics
+```
+//  Messages per second, plot on a time chart
 customMetrics
-| where timestamp > ago(10m)
-| where cloud_RoleName == "HUB-FEEDER"
-| project-reorder cloud_RoleInstance
-| sort by timestamp desc, cloud_RoleInstance asc
-
-//  Message-count by bin and instances
-customMetrics
-| where timestamp > ago(10m)
-| where cloud_RoleName == "HUB-FEEDER"
-| where name=="message-count"
-| summarize messages=sum(valueSum) by bin(timestamp, 1m), cloud_RoleInstance
-| sort by timestamp desc, cloud_RoleInstance asc
-
-//  Chart, per second
-customMetrics
-| where timestamp > ago(30m)
 | where cloud_RoleName == "HUB-FEEDER"
 | where name=="message-count"
 | summarize throughputPerSec=sum(valueSum)/60.0 by bin(timestamp, 1m)
-| render columnchart 
+| render timechart
 
-//  Chart, per minute
-customMetrics
-| where timestamp > ago(30m)
-| where cloud_RoleName == "HUB-FEEDER"
-| where name=="message-count"
-| summarize throughputPerMin=sum(valueSum) by bin(timestamp, 1m)
-| render columnchart 
-
-exceptions 
-| where timestamp > ago(10m)
+exceptions
 | where cloud_RoleName == "HUB-FEEDER"
 | sort by timestamp desc
 | limit 10
@@ -65,20 +40,36 @@ exceptions
 
 ## Query Stream Analytics on Log Analytics
 
-//  Both input and output events:  count per second
-AzureMetrics
-| where ResourceProvider == "MICROSOFT.STREAMANALYTICS"
-| where MetricName == "InputEvents" or MetricName == "OutputEvents" 
-| summarize Count=sum(Count)/60 by MetricName, bin(TimeGenerated, 1m)
-| render timechart 
+https://docs.microsoft.com/en-us/azure/stream-analytics/stream-analytics-monitoring#metrics-available-for-stream-analytics
 
 //  All metrics
 AzureMetrics
 | where ResourceProvider == "MICROSOFT.STREAMANALYTICS"
 | distinct MetricName
-| order by MetricName
+| order by MetricName asc
+
+//  Both input and output events:  count per second
+AzureMetrics
+| where ResourceProvider == "MICROSOFT.STREAMANALYTICS"
+| where MetricName == "InputEvents" or MetricName == "OutputEvents" 
+| summarize Count=sum(Total)/60 by MetricName, bin(TimeGenerated, 1m)
+| render timechart 
+
+//  Backlog
+AzureMetrics
+| where ResourceProvider == "MICROSOFT.STREAMANALYTICS"
+| where MetricName == "InputEventsSourcesBacklogged"
+| summarize Count=sum(Total) by MetricName, bin(TimeGenerated, 1m)
+| render timechart 
 
 ##  Query Cosmos DB on Log Analytics
+
+```
+SELECT COUNT(1) FROM c
+
+SELECT TOP 1 * FROM c ORDER BY c._ts DESC
+
+```
 
 //  See https://docs.microsoft.com/en-us/azure/cosmos-db/cosmosdb-monitor-resource-logs#diagnostic-queries
 

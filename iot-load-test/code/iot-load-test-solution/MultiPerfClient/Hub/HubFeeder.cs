@@ -22,7 +22,7 @@ namespace MultiPerfClient.Hub
         {
             private readonly HubFeederConfiguration _configuration = new HubFeederConfiguration();
             private readonly IDictionary<string, string> _telemetryContext;
-            private readonly Random _random = new Random();
+            private readonly Random _random = new Random(42);
             private volatile int _clientIndex;
             private volatile int _messageCount = 0;
             private volatile int _errorCount = 0;
@@ -118,7 +118,7 @@ namespace MultiPerfClient.Hub
                 using (var stream = new MemoryStream())
                 using (var writer = new StreamWriter(stream))
                 {
-                    var payload = from i in Enumerable.Range(0, _configuration.MessageSize * 1024)
+                    var payload = from i in Enumerable.Range(0, _configuration.MessageSize)
                                   select (char)(_random.Next((int)'A', (int)'Z'));
 
                     writer.Write("{'payload':'");
