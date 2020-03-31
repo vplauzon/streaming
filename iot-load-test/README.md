@@ -55,6 +55,13 @@ AzureMetrics
 | summarize Count=sum(Total)/60 by MetricName, bin(TimeGenerated, 1m)
 | render timechart 
 
+//  Both input and output events:  bytes per second
+AzureMetrics
+| where ResourceProvider == "MICROSOFT.STREAMANALYTICS"
+| where MetricName == "InputEventBytes" or MetricName == "OutputEventBytes" 
+| summarize Count=sum(Total)/60 by MetricName, bin(TimeGenerated, 1m)
+| render timechart 
+
 //  Backlog
 AzureMetrics
 | where ResourceProvider == "MICROSOFT.STREAMANALYTICS"
@@ -78,15 +85,15 @@ AzureDiagnostics
 | where ResourceProvider=="MICROSOFT.DOCUMENTDB" 
 | distinct Category
 
-//  Cost of writes
+//  Cost of writes per operation
 AzureDiagnostics 
 | where ResourceProvider=="MICROSOFT.DOCUMENTDB" 
 | where Category=="DataPlaneRequests" 
 | where OperationName == "Execute"
-| project TimeGenerated, requestCharge_s
-| limit 5
+| summarize ru=avg(toreal(requestCharge_s)) by bin(TimeGenerated, 1m)
+| render timechart 
 
-//  Cost of writes on chart
+//  Cost of writes, total
 AzureDiagnostics 
 | where ResourceProvider=="MICROSOFT.DOCUMENTDB" 
 | where Category=="DataPlaneRequests" 
