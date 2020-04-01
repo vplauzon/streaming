@@ -212,7 +212,7 @@ namespace MultiPerfClient.Hub
                 _configuration.ConnectionString);
             var uniqueCode = Guid.NewGuid().GetHashCode().ToString("x8");
             var ids = (from i in Enumerable.Range(0, _configuration.DeviceCount)
-                       select $"{i}.{Environment.MachineName}.{uniqueCode}").ToArray();
+                       select $"{Environment.MachineName}.{uniqueCode}.{i}").ToArray();
             //  Avoid throttling on registration
             var segments = TaskRunner.Segment(ids, _configuration.RegistrationsPerSecond);
             var tasks = from s in segments

@@ -14,8 +14,7 @@
     "Streaming Job Name": "[concat('streaming-', variables('Unique ID'))]",
     "Cosmos Account Name": "[concat('cosmos-', variables('Unique ID'))]",
     "Cosmos Db Name": "operationDb",
-    "Cosmos Telemetry Container": "telemetry",
-    "Cosmos Device Container": "device"
+    "Cosmos Telemetry Container": "telemetry"
   },
   "resources": [
     {
@@ -274,51 +273,6 @@
                   }
                 }
               ]
-            },
-            {
-              "name": "[variables('Cosmos Device Container')]",
-              "type": "containers",
-              "apiVersion": "2019-12-12",
-              "dependsOn": [
-                "[resourceId('Microsoft.DocumentDB/databaseAccounts/sqlDatabases', variables('Cosmos Account Name'), variables('Cosmos Db Name'))]"
-              ],
-              "properties": {
-                "resource": {
-                  "id": "[variables('Cosmos Device Container')]",
-                  "partitionKey": {
-                    "paths": [
-                      "/deviceId"
-                    ],
-                    "kind": "Hash"
-                  },
-                  "indexingPolicy": {
-                    "indexingMode": "consistent",
-                    "includedPaths": [
-                      {
-                        "path": "/*"
-                      }
-                    ],
-                    "excludedPaths": [
-                    ]
-                  },
-                  "defaultTtl": 60
-                }
-              },
-              "resources": [
-                {
-                  "type": "throughputSettings",
-                  "apiVersion": "2020-03-01",
-                  "name": "default",
-                  "dependsOn": [
-                    "[resourceId('Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers', variables('Cosmos Account Name'), variables('Cosmos Db Name'), variables('Cosmos Device Container'))]"
-                  ],
-                  "properties": {
-                    "resource": {
-                      "throughput": 400
-                    }
-                  }
-                }
-              ]
             }
           ]
         },
@@ -391,7 +345,7 @@
         "eventsOutOfOrderPolicy": "adjust",
         "eventsOutOfOrderMaxDelayInSeconds": 0,
         "eventsLateArrivalMaxDelayInSeconds": 5,
-        "compatibilityLevel": "1.1",
+        "compatibilityLevel": "1.2",
         "dataLocale": "en-US",
         "inputs": [
           {
