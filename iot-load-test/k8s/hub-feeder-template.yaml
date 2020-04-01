@@ -23,14 +23,14 @@ spec:
           value: "{app-insights-key}"
         - name: IOT_CONN_STRING
           value: "{iot-connection-string}"
-        - name: DEVICE_COUNT
-          value: "5000"
         - name: REGISTRATIONS_PER_SECOND
           value: "100"
+        - name: DEVICE_COUNT
+          value: "5"
         - name: CONCURRENT_MESSAGES_COUNT
-          value: "5000"
+          value: "25"
         - name: MESSAGE_SIZE_IN_BYTE
-          value: "3"
+          value: "3072"
         resources:
           requests:
             memory: "512M"
