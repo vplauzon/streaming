@@ -66,7 +66,7 @@ AzureMetrics
 AzureMetrics
 | where ResourceProvider == "MICROSOFT.STREAMANALYTICS"
 | where MetricName == "InputEventsSourcesBacklogged"
-| summarize Count=sum(Total) by MetricName, bin(TimeGenerated, 1m)
+| summarize Count=max(Total) by MetricName, bin(TimeGenerated, 1m)
 | render timechart 
 
 ##  Query Cosmos DB on Log Analytics
@@ -75,7 +75,6 @@ AzureMetrics
 SELECT COUNT(1) FROM c
 
 SELECT TOP 1 * FROM c ORDER BY c._ts DESC
-
 ```
 
 //  See https://docs.microsoft.com/en-us/azure/cosmos-db/cosmosdb-monitor-resource-logs#diagnostic-queries
