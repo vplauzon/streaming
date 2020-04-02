@@ -119,6 +119,14 @@
       },
       "resources": [
         {
+          "type": "eventHubEndpoints/ConsumerGroups",
+          "name": "events/adx",
+          "apiVersion": "2019-03-22",
+          "dependsOn": [
+            "[resourceId('Microsoft.Devices/IotHubs', variables('Hub Name'))]"
+          ]
+        },
+        {
           "type": "providers/diagnosticSettings",
           "apiVersion": "2017-05-01-preview",
           "name": "[concat('microsoft.insights/', variables('Log Analytics Diagnostic Name'))]",
