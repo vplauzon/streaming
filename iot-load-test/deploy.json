@@ -14,7 +14,9 @@
     "Streaming Job Name": "[concat('streaming-', variables('Unique ID'))]",
     "Cosmos Account Name": "[concat('cosmos-', variables('Unique ID'))]",
     "Cosmos Db Name": "operationDb",
-    "Cosmos Telemetry Container": "telemetry"
+    "Cosmos Telemetry Container": "telemetry",
+    "Kusto Cluster Name": "[concat('kusto', variables('Unique ID'))]",
+    "Kusto Db Name": "telemetry"
   },
   "resources": [
     {
@@ -428,6 +430,35 @@
               }
             ]
           }
+        }
+      ]
+    },
+    {
+      "type": "Microsoft.Kusto/clusters",
+      "apiVersion": "2019-05-15",
+      "name": "[variables('Kusto Cluster Name')]",
+      "location": "[resourceGroup().location]",
+      "sku": {
+        "name": "Standard_D14_v2",
+        "capacity": "2",
+        "tier": "Standard"
+      },
+      "properties": {
+        "enableStreamingIngest": false
+      },
+      "resources": [
+        {
+          "type": "databases",
+          "apiVersion": "2019-05-15",
+          "name": "[variables('Kusto Db Name')]",
+          "location": "[resourceGroup().location]",
+          "dependsOn": [
+            "[resourceId('Microsoft.Kusto/clusters', variables('Kusto Db Name'))]"
+          ],
+          "properties": {
+          },
+          "resources": [
+          ]
         }
       ]
     }

@@ -75,6 +75,8 @@ AzureMetrics
 SELECT COUNT(1) FROM c
 
 SELECT TOP 1 * FROM c ORDER BY c._ts DESC
+
+SELECT TOP 1 * FROM c WHERE c.deviceId=<deviceId> ORDER BY c._ts DESC
 ```
 
 //  See https://docs.microsoft.com/en-us/azure/cosmos-db/cosmosdb-monitor-resource-logs#diagnostic-queries
@@ -84,18 +86,9 @@ AzureDiagnostics
 | where ResourceProvider=="MICROSOFT.DOCUMENTDB" 
 | distinct Category
 
-//  Cost of writes per operation
-AzureDiagnostics 
-| where ResourceProvider=="MICROSOFT.DOCUMENTDB" 
-| where Category=="DataPlaneRequests" 
-| where OperationName == "Execute"
-| summarize ru=avg(toreal(requestCharge_s)) by bin(TimeGenerated, 1m)
-| render timechart 
-
 //  Cost of writes, total
 AzureDiagnostics 
 | where ResourceProvider=="MICROSOFT.DOCUMENTDB" 
 | where Category=="DataPlaneRequests" 
-| where OperationName == "Execute"
 | summarize ru=sum(toreal(requestCharge_s))/60 by bin(TimeGenerated, 1m)
 | render timechart 
