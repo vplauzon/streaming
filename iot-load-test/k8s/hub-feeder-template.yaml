@@ -26,7 +26,7 @@ spec:
         - name: REGISTRATIONS_PER_SECOND
           value: "100"
         - name: DEVICE_COUNT
-          value: "5"
+          value: "1000"
         - name: CONCURRENT_MESSAGES_COUNT
           value: "25"
         - name: MESSAGE_SIZE_IN_BYTE

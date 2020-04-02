@@ -4,6 +4,7 @@ using Microsoft.Azure.Devices.Client;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Threading;
@@ -120,11 +121,14 @@ namespace MultiPerfClient.Hub
                     var random = new Random();
                     var payload = from i in Enumerable.Range(0, _configuration.MessageSize)
                                   select (char)(random.Next((int)'A', (int)'Z'));
+                    var currentTime = DateTime.Now.ToUniversalTime().ToString(
+                        "o",
+                        CultureInfo.CreateSpecificCulture("en-US"));
 
                     writer.Write("{'payload':'");
                     writer.Write(payload.ToArray());
                     writer.Write("', 'recordedAt': '");
-                    writer.Write(DateTime.Now.ToUniversalTime());
+                    writer.Write(currentTime);
                     writer.Write("'}");
 
                     writer.Flush();

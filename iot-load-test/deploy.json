@@ -257,7 +257,7 @@
                     "excludedPaths": [
                     ]
                   },
-                  "defaultTtl": 900
+                  "defaultTtl": 4000
                 }
               },
               "resources": [
@@ -347,7 +347,7 @@
         "eventsOutOfOrderPolicy": "adjust",
         "eventsOutOfOrderMaxDelayInSeconds": 0,
         "eventsLateArrivalMaxDelayInSeconds": 5,
-        "compatibilityLevel": "1.2",
+        "compatibilityLevel": "1.1",
         "dataLocale": "en-US",
         "inputs": [
           {
@@ -453,7 +453,7 @@
           "name": "[variables('Kusto Db Name')]",
           "location": "[resourceGroup().location]",
           "dependsOn": [
-            "[resourceId('Microsoft.Kusto/clusters', variables('Kusto Db Name'))]"
+            "[resourceId('Microsoft.Kusto/clusters', variables('Kusto Cluster Name'))]"
           ],
           "properties": {
           },
