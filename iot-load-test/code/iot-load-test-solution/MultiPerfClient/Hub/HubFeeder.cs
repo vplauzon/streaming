@@ -18,135 +18,6 @@ namespace MultiPerfClient.Hub
     /// </summary>
     internal class HubFeeder
     {
-        #region Inner Types
-        private class MessageLoopContext
-        {
-            private readonly HubFeederConfiguration _configuration = new HubFeederConfiguration();
-            private readonly IDictionary<string, string> _telemetryContext;
-            private volatile int _clientIndex;
-            private volatile int _messageCount = 0;
-            private volatile int _errorCount = 0;
-
-            public MessageLoopContext(HubFeederConfiguration configuration)
-            {
-                _telemetryContext = new Dictionary<string, string>()
-                {
-                    { "deviceCount", _configuration.DeviceCount.ToString() },
-                    { "messagePerSecond", _configuration.ConcurrentMessagesCount.ToString() },
-                    { "messageSize", _configuration.MessageSize.ToString() }
-                };
-                //  Start at the end so we can really start at zero (not one)
-                _clientIndex = _configuration.DeviceCount;
-            }
-
-            public async Task LoopMessagesAsync(
-                DeviceClient[] allClients,
-                TelemetryClient telemetryClient,
-                CancellationToken cancellationToken)
-            {
-                var messageTasks = from i in Enumerable.Range(0, _configuration.ConcurrentMessagesCount)
-                                   select PushMessagesAsync(
-                                       allClients,
-                                       telemetryClient,
-                                       cancellationToken);
-                var telemetryTask = SendTelemetryAsync(telemetryClient, cancellationToken);
-
-                await Task.WhenAll(messageTasks.Prepend(telemetryTask));
-            }
-
-            private async Task PushMessagesAsync(
-                DeviceClient[] allClients,
-                TelemetryClient telemetryClient,
-                CancellationToken cancellationToken)
-            {
-                var payload = CreateMessagePayload();
-
-                while (!cancellationToken.IsCancellationRequested)
-                {
-                    using (var message = new Microsoft.Azure.Devices.Client.Message(payload))
-                    {
-                        var client = NextClient(allClients);
-                        var timeoutSource = new CancellationTokenSource(MESSAGE_TIMEOUT);
-                        var combinedSource = CancellationTokenSource.CreateLinkedTokenSource(
-                            cancellationToken,
-                            timeoutSource.Token);
-
-                        message.ContentEncoding = "utf-8";
-                        message.ContentType = "application/json";
-                        try
-                        {
-                            var sendTask = client.SendEventAsync(message, combinedSource.Token);
-
-                            //  Prepare next payload in parallel
-                            payload = CreateMessagePayload();
-                            await sendTask;
-                            Interlocked.Increment(ref _messageCount);
-                        }
-                        catch (Exception ex)
-                        {
-                            telemetryClient.TrackException(ex);
-                            Interlocked.Increment(ref _errorCount);
-                        }
-                    }
-                }
-            }
-
-            private async Task SendTelemetryAsync(
-                TelemetryClient telemetryClient,
-                CancellationToken cancellationToken)
-            {
-                while (!cancellationToken.IsCancellationRequested)
-                {
-                    await Task.Delay(TELEMETRY_INTERVAL, cancellationToken);
-
-                    var messageCount = Interlocked.Exchange(ref _messageCount, 0);
-                    var errorCount = Interlocked.Exchange(ref _errorCount, 0);
-
-                    telemetryClient.TrackMetric(
-                        "message-count",
-                        messageCount,
-                        _telemetryContext);
-                    telemetryClient.TrackMetric(
-                        "error-count",
-                        errorCount,
-                        _telemetryContext);
-                }
-            }
-
-            private byte[] CreateMessagePayload()
-            {
-                using (var stream = new MemoryStream())
-                using (var writer = new StreamWriter(stream))
-                {
-                    var random = new Random();
-                    var payload = from i in Enumerable.Range(0, _configuration.MessageSize)
-                                  select (char)(random.Next((int)'A', (int)'Z'));
-                    var currentTime = DateTime.Now.ToUniversalTime().ToString(
-                        "o",
-                        CultureInfo.CreateSpecificCulture("en-US"));
-
-                    writer.Write("{'payload':'");
-                    writer.Write(payload.ToArray());
-                    writer.Write("', 'recordedAt': '");
-                    writer.Write(currentTime);
-                    writer.Write("'}");
-
-                    writer.Flush();
-
-                    return stream.ToArray();
-                }
-            }
-
-            private DeviceClient NextClient(DeviceClient[] allClients)
-            {
-                var nextIndex = Interlocked.Increment(ref _clientIndex) % _configuration.DeviceCount;
-
-                return allClients[nextIndex];
-            }
-        }
-        #endregion
-
-        private static readonly TimeSpan TELEMETRY_INTERVAL = TimeSpan.FromSeconds(20);
         private static readonly TimeSpan MESSAGE_TIMEOUT = TimeSpan.FromSeconds(5);
 
         private readonly CancellationTokenSource _cancellationTokenSource = new CancellationTokenSource();
@@ -161,28 +32,14 @@ namespace MultiPerfClient.Hub
         public async Task RunAsync()
         {
             Console.WriteLine("Hub Feeder");
-            Console.WriteLine($"Register {_configuration.DeviceCount} devices...");
+            Console.WriteLine($"Register {_configuration.TotalDeviceCount} devices...");
 
             try
             {
-                var deviceIds = await RegisterDevicesAsync();
-                var setting = new AmqpTransportSettings(Microsoft.Azure.Devices.Client.TransportType.Amqp_Tcp_Only)
-                {
-                    AmqpConnectionPoolSettings = new AmqpConnectionPoolSettings()
-                    {
-                        Pooling = true
-                    }
-                };
-                var settings = new ITransportSettings[] { setting };
-                var clients = (from id in deviceIds
-                               select DeviceClient.CreateFromConnectionString(
-                                   _configuration.ConnectionString,
-                                   id,
-                                   settings)).ToArray();
+                var gateways = await RegisterDevicesAsync();
 
                 Console.WriteLine("Looping for messages...");
-
-                await LoopMessagesAsync(clients);
+                await LoopMessagesAsync(gateways);
             }
             catch (Exception ex)
             {
@@ -200,23 +57,32 @@ namespace MultiPerfClient.Hub
             _cancellationTokenSource.Cancel();
         }
 
-        private async Task LoopMessagesAsync(DeviceClient[] allClients)
+        private async Task LoopMessagesAsync(IEnumerable<Gateway> gateways)
         {
-            var context = new MessageLoopContext(_configuration);
+            var context = new MessageLoopContext(_configuration, MESSAGE_TIMEOUT);
 
             await context.LoopMessagesAsync(
-                allClients,
+                gateways,
                 _telemetryClient,
                 _cancellationTokenSource.Token);
         }
 
-        private async Task<string[]> RegisterDevicesAsync()
+        private async Task<Gateway[]> RegisterDevicesAsync()
         {
             var registryManager = RegistryManager.CreateFromConnectionString(
                 _configuration.ConnectionString);
             var uniqueCode = Guid.NewGuid().GetHashCode().ToString("x8");
-            var ids = (from i in Enumerable.Range(0, _configuration.DeviceCount)
-                       select $"{Environment.MachineName}.{uniqueCode}.{i}").ToArray();
+            var gatewayIds =
+                (from g in Enumerable.Range(0, _configuration.GatewayCount)
+                 let gatewayName = $"{uniqueCode}.{g}"
+                 select new
+                 {
+                     GatewayName = gatewayName,
+                     DeviceIds = (from d in Enumerable.Range(0, _configuration.DevicePerGateway)
+                                  let deviceName = $"{gatewayName}.{d}"
+                                  select deviceName).ToArray()
+                 }).ToArray();
+            var ids = gatewayIds.SelectMany(g => g.DeviceIds);
             //  Avoid throttling on registration
             var segments = TaskRunner.Segment(ids, _configuration.RegistrationsPerSecond);
             var tasks = from s in segments
@@ -227,7 +93,24 @@ namespace MultiPerfClient.Hub
                 MESSAGE_TIMEOUT,
                 _cancellationTokenSource.Token);
 
-            return ids;
+            var setting = new AmqpTransportSettings(Microsoft.Azure.Devices.Client.TransportType.Amqp_Tcp_Only)
+            {
+                AmqpConnectionPoolSettings = new AmqpConnectionPoolSettings()
+                {
+                    Pooling = true
+                }
+            };
+            var settings = new ITransportSettings[] { setting };
+            var gateways = from g in gatewayIds
+                           let devices = from d in g.DeviceIds
+                                         let client = DeviceClient.CreateFromConnectionString(
+                                             _configuration.ConnectionString,
+                                             d,
+                                             settings)
+                                         select new DeviceProxy(d, client)
+                           select new Gateway(g.GatewayName, devices);
+
+            return gateways.ToArray();
         }
 
         private async Task<string[]> RegisterBatchDeviceAsync(

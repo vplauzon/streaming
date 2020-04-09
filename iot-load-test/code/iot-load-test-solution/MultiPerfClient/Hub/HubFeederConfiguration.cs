@@ -8,8 +8,10 @@ namespace MultiPerfClient.Hub
         public HubFeederConfiguration()
         {
             var connectionString = Environment.GetEnvironmentVariable("IOT_CONN_STRING");
-            var deviceCountText = Environment.GetEnvironmentVariable("DEVICE_COUNT");
-            int deviceCount;
+            var gatewayCountText = Environment.GetEnvironmentVariable("GATEWAY_COUNT");
+            int gatewayCount;
+            var devicePerGatewayText = Environment.GetEnvironmentVariable("DEVICE_PER_GATEWAY");
+            int devicePerGateway;
             var registrationsPerSecondText = Environment.GetEnvironmentVariable("REGISTRATIONS_PER_SECOND");
             int registrationsPerSecond;
             var concurrentMessagesCountText = Environment.GetEnvironmentVariable("CONCURRENT_MESSAGES_COUNT");
@@ -21,13 +23,21 @@ namespace MultiPerfClient.Hub
             {
                 throw new ArgumentNullException("Environment variable missing", "IOT_CONN_STRING");
             }
-            else if (string.IsNullOrWhiteSpace(deviceCountText))
+            else if (string.IsNullOrWhiteSpace(gatewayCountText))
             {
-                throw new ArgumentNullException("Environment variable missing", "DEVICE_COUNT");
+                throw new ArgumentNullException("Environment variable missing", "GATEWAY_COUNT");
             }
-            else if (!int.TryParse(deviceCountText, out deviceCount))
+            else if (!int.TryParse(gatewayCountText, out gatewayCount))
             {
-                throw new ArgumentException("Env Var isn't an integer", "DEVICE_COUNT");
+                throw new ArgumentException("Env Var isn't an integer", "GATEWAY_COUNT");
+            }
+            else if (string.IsNullOrWhiteSpace(devicePerGatewayText))
+            {
+                throw new ArgumentNullException("Environment variable missing", "DEVICE_PER_GATEWAY");
+            }
+            else if (!int.TryParse(devicePerGatewayText, out devicePerGateway))
+            {
+                throw new ArgumentException("Env Var isn't an integer", "DEVICE_PER_GATEWAY");
             }
             else if (string.IsNullOrWhiteSpace(registrationsPerSecondText))
             {
@@ -54,7 +64,8 @@ namespace MultiPerfClient.Hub
                 throw new ArgumentException("Env Var isn't an integer", "MESSAGE_SIZE_IN_BYTE");
             }
             ConnectionString = connectionString;
-            DeviceCount = deviceCount;
+            GatewayCount = gatewayCount;
+            DevicePerGateway = devicePerGateway;
             RegistrationsPerSecond = registrationsPerSecond;
             ConcurrentMessagesCount = concurrentMessagesCount;
             MessageSize = messageSize;
@@ -62,10 +73,17 @@ namespace MultiPerfClient.Hub
 
         public string ConnectionString { get; }
 
-        public int DeviceCount { get; }
+        public int GatewayCount { get; }
+
+        public int DevicePerGateway { get; }
+
+        public int TotalDeviceCount
+        {
+            get { return GatewayCount * DevicePerGateway; }
+        }
 
         public int RegistrationsPerSecond { get; }
-        
+
         public int ConcurrentMessagesCount { get; }
 
         public int MessageSize { get; }
