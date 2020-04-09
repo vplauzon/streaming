@@ -136,7 +136,7 @@ namespace MultiPerfClient.Hub
             {
                 gatewayId = gatewayName,
                 deviceId = deviceName,
-                payload = payload.ToArray(),
+                filling = new string(payload.ToArray()),
                 recordedAt = currentTime
             };
             var binary = JsonSerializer.SerializeToUtf8Bytes(message);

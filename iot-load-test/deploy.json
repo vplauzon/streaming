@@ -251,7 +251,7 @@
                   "id": "[variables('Cosmos Telemetry Container')]",
                   "partitionKey": {
                     "paths": [
-                      "/deviceId"
+                      "/gatewayId"
                     ],
                     "kind": "Hash"
                   },
@@ -401,7 +401,7 @@
           "name": "Transformation",
           "properties": {
             "streamingUnits": 1,
-            "query": "SELECT IoTHub.ConnectionDeviceId AS deviceId, * INTO cosmos FROM hub PARTITION BY PartitionId"
+            "query": "SELECT * INTO cosmos FROM hub PARTITION BY PartitionId"
           }
         }
       },
