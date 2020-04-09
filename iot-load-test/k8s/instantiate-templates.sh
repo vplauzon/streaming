@@ -55,7 +55,7 @@ echo
 echo "Instantiating cosmos-ping.yaml"
 
 #   Escape connection string that might contain '/' in it:
-escapedCosmosConnectionString=$(echo $iotConnectionString|sed -e 's/[\/&]/\\&/g')
+escapedCosmosConnectionString=$(echo $cosmosConnectionString|sed -e 's/[\/&]/\\&/g')
 
 #   Find and replace tokens
 sed "s/{app-insights-key}/$appInsightsKey/g" cosmos-ping-template.yaml \
