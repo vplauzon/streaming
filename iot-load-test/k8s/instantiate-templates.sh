@@ -28,6 +28,19 @@ appInsightsKey=$(az monitor app-insights component show \
     -o tsv)
 
 echo
+echo "Retrieving Cosmos DB name"
+
+cosmosDb=$(az cosmosdb list -g $rg --query "[0].name" -o tsv)
+
+echo
+echo "Retrieving Cosmos DB connection string"
+
+cosmosConnectionString=$(az cosmosdb list-connection-strings \
+    -g $rg -n $cosmosDb \
+    --query "connectionStrings[0].connectionString" \
+    -o tsv)
+
+echo
 echo "Instantiating hub-feeder.yaml"
 
 #   Escape connection string that might contain '/' in it:
@@ -37,4 +50,15 @@ escapedIotConnectionString=$(echo $iotConnectionString|sed -e 's/[\/&]/\\&/g')
 sed "s/{app-insights-key}/$appInsightsKey/g" hub-feeder-template.yaml \
     | sed "s/{iot-connection-string}/$escapedIotConnectionString/g" \
     > hub-feeder.yaml
+
+echo
+echo "Instantiating cosmos-ping.yaml"
+
+#   Escape connection string that might contain '/' in it:
+escapedCosmosConnectionString=$(echo $iotConnectionString|sed -e 's/[\/&]/\\&/g')
+
+#   Find and replace tokens
+sed "s/{app-insights-key}/$appInsightsKey/g" cosmos-ping-template.yaml \
+    | sed "s/{cosmos-connection-string}/$escapedCosmosConnectionString/g" \
+    > cosmos-ping.yaml
 

@@ -26,7 +26,7 @@ namespace MultiPerfClient
 
                     return;
 
-                case "cosmos-client":
+                case "cosmos-ping":
                     var cosmosPinger = new CosmosPinger(InitAppInsights("HUB-FEEDER"));
 
                     await RunDaemonAsync(cosmosPinger);
