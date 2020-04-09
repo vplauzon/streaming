@@ -1,6 +1,7 @@
 ﻿using AppInsights.TelemetryInitializers;
 using Microsoft.ApplicationInsights;
 using Microsoft.ApplicationInsights.Extensibility;
+using MultiPerfClient.Cosmos;
 using MultiPerfClient.Hub;
 using System;
 using System.Net;
@@ -20,16 +21,15 @@ namespace MultiPerfClient
             {
                 case "hub-feeder":
                     var feeder = new HubFeeder(InitAppInsights("HUB-FEEDER"));
-                    var task = feeder.RunAsync();
+                    
+                    await RunDaemonAsync(feeder);
 
-                    AppDomain.CurrentDomain.ProcessExit += async (object? sender, EventArgs e) =>
-                    {
-                        feeder.Stop();
+                    return;
 
-                        await task;
-                    };
+                case "cosmos-client":
+                    var cosmosPinger = new CosmosPinger(InitAppInsights("HUB-FEEDER"));
 
-                    await task;
+                    await RunDaemonAsync(cosmosPinger);
 
                     return;
 
@@ -44,6 +44,20 @@ namespace MultiPerfClient
 
                     return;
             }
+        }
+
+        private static async Task RunDaemonAsync(IDaemon daemon)
+        {
+            var task = daemon.RunAsync();
+
+            AppDomain.CurrentDomain.ProcessExit += async (object? sender, EventArgs e) =>
+            {
+                daemon.Stop();
+
+                await task;
+            };
+
+            await task;
         }
 
         private static TelemetryClient InitAppInsights(string roleName)

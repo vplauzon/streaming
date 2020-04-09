@@ -16,7 +16,7 @@ namespace MultiPerfClient.Hub
     /// Largely inspired by
     /// https://docs.microsoft.com/en-us/azure/iot-hub/quickstart-send-telemetry-dotnet.
     /// </summary>
-    internal class HubFeeder
+    internal class HubFeeder : IDaemon
     {
         private static readonly TimeSpan MESSAGE_TIMEOUT = TimeSpan.FromSeconds(5);
 
@@ -29,7 +29,7 @@ namespace MultiPerfClient.Hub
             _telemetryClient = telemetryClient;
         }
 
-        public async Task RunAsync()
+        async Task IDaemon.RunAsync()
         {
             Console.WriteLine("Hub Feeder");
             Console.WriteLine($"Register {_configuration.TotalDeviceCount} devices...");
@@ -52,7 +52,7 @@ namespace MultiPerfClient.Hub
             }
         }
 
-        public void Stop()
+        void IDaemon.Stop()
         {
             _cancellationTokenSource.Cancel();
         }

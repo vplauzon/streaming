@@ -26,7 +26,7 @@ spec:
         - name: REGISTRATIONS_PER_SECOND
           value: "100"
         - name: GATEWAY_COUNT
-          value: "500"
+          value: "5"
         - name: DEVICE_PER_GATEWAY
           value: "1"
         - name: CONCURRENT_MESSAGES_COUNT
