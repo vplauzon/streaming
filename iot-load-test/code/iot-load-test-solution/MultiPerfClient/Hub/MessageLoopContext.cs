@@ -77,15 +77,17 @@ namespace MultiPerfClient.Hub
                     deviceComposite.Gateway.Name,
                     deviceComposite.Device.Name);
 
-                using (var message = new Microsoft.Azure.Devices.Client.Message(payload))
+                using (var message = new Microsoft.Azure.Devices.Client.Message(payload)
+                {
+                    ContentEncoding = "utf-8",
+                    ContentType = "application/json"
+                })
                 {
                     var timeoutSource = new CancellationTokenSource(_messageTimeout);
                     var combinedSource = CancellationTokenSource.CreateLinkedTokenSource(
                         cancellationToken,
                         timeoutSource.Token);
 
-                    message.ContentEncoding = "utf-8";
-                    message.ContentType = "application/json";
                     try
                     {
                         await deviceComposite.Device.Client.SendEventAsync(

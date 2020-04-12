@@ -29,6 +29,7 @@ https://docs.microsoft.com/en-us/azure/iot-hub/iot-hub-scaling
 \# Nodes|Message filler size|\# Gateways|\# Devices|Concurrency|# events / min
 -|-|-|-|-|-
 1|3 kb|1|1|1|5 400
+1|3 kb|10|1|1|4 400
 1|3 kb|10|1|5|22 500
 
 Ratio 100:1 for devices vs threads yield very unstable throughput
@@ -93,7 +94,7 @@ SELECT COUNT(1) FROM c
 
 SELECT TOP 1 * FROM c ORDER BY c._ts DESC
 
-SELECT TOP 1 c.recordedAt, c.IoTHub.EnqueuedTime FROM c ORDER BY c._ts DESC
+SELECT TOP 1 c.id, c.gatewayId, c.deviceId, c.recordedAt, c.EventProcessedUtcTime FROM c ORDER BY c.recordedAtTs DESC
 
 SELECT TOP 1 * FROM c WHERE c.deviceId=<deviceId> ORDER BY c._ts DESC
 

@@ -97,7 +97,8 @@ namespace MultiPerfClient.Hub
             {
                 AmqpConnectionPoolSettings = new AmqpConnectionPoolSettings()
                 {
-                    Pooling = true
+                    Pooling = true,
+                    MaxPoolSize = (uint)(_configuration.GatewayCount * _configuration.DevicePerGateway)
                 }
             };
             var settings = new ITransportSettings[] { setting };
