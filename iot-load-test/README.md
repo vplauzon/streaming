@@ -81,6 +81,11 @@ SELECT TOP 1 * FROM c WHERE c.deviceId=<deviceId> ORDER BY c._ts DESC
 SELECT VALUE MAX(c._ts) FROM c ORDER BY c._ts DESC
 
 SELECT DISTINCT c.gatewayId FROM c WHERE c._ts><MAX - XYZ>
+
+SELECT MAX(c._ts) AS timestamp, c.deviceId
+FROM c
+WHERE c.gatewayId=<XYZ>
+GROUP BY c.deviceId
 ```
 
 //  See https://docs.microsoft.com/en-us/azure/cosmos-db/cosmosdb-monitor-resource-logs#diagnostic-queries

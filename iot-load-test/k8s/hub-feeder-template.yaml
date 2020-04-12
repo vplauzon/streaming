@@ -26,11 +26,11 @@ spec:
         - name: REGISTRATIONS_PER_SECOND
           value: "100"
         - name: GATEWAY_COUNT
-          value: "5"
+          value: "1"
         - name: DEVICE_PER_GATEWAY
           value: "1"
         - name: CONCURRENT_MESSAGES_COUNT
-          value: "25"
+          value: "1"
         - name: MESSAGE_SIZE_IN_BYTE
           value: "3072"
         resources:

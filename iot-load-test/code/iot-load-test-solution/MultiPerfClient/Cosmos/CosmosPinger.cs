@@ -34,8 +34,8 @@ namespace MultiPerfClient.Cosmos
             {
                 Console.WriteLine("Looping for pings...");
 
-                _gatewayIds = await LoadGatewayIdsAsync();
-                await LoopMessagesAsync();
+                await LoadGatewayIdsAsync();
+                await LoopPingAsync();
             }
             catch (Exception ex)
             {
@@ -53,7 +53,7 @@ namespace MultiPerfClient.Cosmos
             _cancellationTokenSource.Cancel();
         }
 
-        private async Task<IImmutableList<string>> LoadGatewayIdsAsync()
+        private async Task LoadGatewayIdsAsync()
         {
             var maxTimestamp = (await LoadQueryAsync<long>(
                 "SELECT VALUE MAX(c._ts) FROM c")).First();
@@ -62,18 +62,38 @@ namespace MultiPerfClient.Cosmos
                 new QueryDefinition("SELECT DISTINCT VALUE c.gatewayId FROM c WHERE c._ts > @minTimestamp")
                 .WithParameter("@minTimestamp", maxTimestamp - 60));
 
-            return gatewaysIds.ToImmutableArray();
+            _gatewayIds = gatewaysIds.ToImmutableArray();
         }
 
-        private async Task LoopMessagesAsync()
+        private async Task LoopPingAsync()
         {
-            await Task.Delay(3);
-            //var context = new MessageLoopContext(_configuration, MESSAGE_TIMEOUT);
+            var pingTasks = from i in Enumerable.Range(0, _configuration.ConcurrentCallCount)
+                            select PeriodicPingCosmosAsync();
+            var loadGatewayTask = PeriodicLoadGatewayIdsAsync();
 
-            //await context.LoopMessagesAsync(
-            //    gateways,
-            //    _telemetryClient,
-            //    _cancellationTokenSource.Token);
+            await Task.WhenAll(pingTasks.Prepend(loadGatewayTask));
+        }
+
+        private async Task PeriodicLoadGatewayIdsAsync()
+        {
+            while (!_cancellationTokenSource.IsCancellationRequested)
+            {
+                await Task.Delay(TimeSpan.FromMinutes(1), _cancellationTokenSource.Token);
+                await LoadGatewayIdsAsync();
+            }
+        }
+
+        private async Task PeriodicPingCosmosAsync()
+        {
+            while (!_cancellationTokenSource.IsCancellationRequested)
+            {
+                await PingCosmosAsync();
+            }
+        }
+
+        private Task PingCosmosAsync()
+        {
+            throw new NotImplementedException();
         }
 
         private async Task<IEnumerable<T>> LoadQueryAsync<T>(string query)

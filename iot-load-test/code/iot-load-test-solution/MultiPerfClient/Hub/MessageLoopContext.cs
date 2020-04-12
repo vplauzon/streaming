@@ -146,7 +146,8 @@ namespace MultiPerfClient.Hub
 
         private int NextDeviceIndex()
         {
-            var nextIndex = Interlocked.Increment(ref _clientIndex) % _configuration.TotalDeviceCount;
+            var nextIndex = Interlocked.Increment(ref _clientIndex)
+                % _configuration.TotalDeviceCount;
 
             return nextIndex;
         }
