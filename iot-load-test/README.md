@@ -26,11 +26,11 @@ https://docs.microsoft.com/en-us/azure/iot-hub/iot-hub-scaling
 
 ### Hub Feeder performance
 
-\# Nodes|Message filler size|\# Gateways|\# Devices|Concurrency|# events / min
--|-|-|-|-|-
-1|3 kb|1|1|1|5 400
-1|3 kb|10|1|1|4 400
-1|3 kb|10|1|5|22 500
+\# Feeder Nodes|Message filler size|\# Gateways|\# Devices|Concurrency|# events / min|IoT Scale
+-|-|-|-|-|-|-
+1|3 kb|1|1|1|5 400|1 x B3
+1|3 kb|1000|1|1|4 500|1 x B3
+1|3 kb|1000|15|1|?|3 x B3
 
 Ratio 100:1 for devices vs threads yield very unstable throughput
 

@@ -97,8 +97,7 @@ namespace MultiPerfClient.Hub
             {
                 AmqpConnectionPoolSettings = new AmqpConnectionPoolSettings()
                 {
-                    Pooling = true,
-                    MaxPoolSize = 20
+                    Pooling = true
                 },
                 IdleTimeout = TimeSpan.FromMinutes(60)
             };
