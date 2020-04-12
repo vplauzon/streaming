@@ -14,6 +14,7 @@ namespace MultiPerfClient.Hub
 {
     internal class MessageLoopContext
     {
+        private static readonly DateTime TIMESTAMP_ORIGIN = new DateTime(1970,1,1);
         private static readonly TimeSpan TELEMETRY_INTERVAL = TimeSpan.FromSeconds(20);
 
         private readonly HubFeederConfiguration _configuration;
@@ -129,15 +130,18 @@ namespace MultiPerfClient.Hub
             var random = new Random();
             var payload = from i in Enumerable.Range(0, _configuration.MessageSize)
                           select (char)(random.Next((int)'A', (int)'Z'));
-            var currentTime = DateTime.Now.ToUniversalTime().ToString(
+            var currentTime = DateTime.Now.ToUniversalTime();
+            var currentTimeString = DateTime.Now.ToUniversalTime().ToString(
                 "o",
                 CultureInfo.CreateSpecificCulture("en-US"));
+            var currentTimeTs = currentTime.Subtract(TIMESTAMP_ORIGIN).TotalMilliseconds;
             var message = new
             {
                 gatewayId = gatewayName,
                 deviceId = deviceName,
                 filling = new string(payload.ToArray()),
-                recordedAt = currentTime
+                recordedAt = currentTimeString,
+                recordedAtTimestamp = currentTimeTs
             };
             var binary = JsonSerializer.SerializeToUtf8Bytes(message);
 

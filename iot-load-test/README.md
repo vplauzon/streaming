@@ -22,14 +22,31 @@ Limits:
 https://docs.microsoft.com/en-us/azure/iot-hub/iot-hub-devguide-quotas-throttling
 https://docs.microsoft.com/en-us/azure/iot-hub/iot-hub-scaling
 
+## Load test
+
+### Hub Feeder performance
+
+\# Nodes|Message filler size|\# Gateways|\# Devices|Concurrency|# events / min
+-|-|-|-|-|-
+1|3 kb|1|1|1|5 400
+1|3 kb|10|1|5|22 500
+
+Ratio 100:1 for devices vs threads yield very unstable throughput
+
+### Cosmos DB performance
+
+ASA Unit|Cosmos RU|\# Gateways|\# Devices|#events / s|Latency
+-|-|-|-|-|-
+1|4000|1|1|90|0.2s
+
 ## Query hub-feeder in App Insights
 
 ```
-//  Messages per second, plot on a time chart
+//  Messages per minute, plot on a time chart
 customMetrics
 | where cloud_RoleName == "HUB-FEEDER"
 | where name=="message-count"
-| summarize throughputPerSec=sum(valueSum)/60.0 by bin(timestamp, 1m)
+| summarize throughputPerSec=sum(valueSum) by bin(timestamp, 1m)
 | render timechart
 
 exceptions
@@ -75,6 +92,8 @@ AzureMetrics
 SELECT COUNT(1) FROM c
 
 SELECT TOP 1 * FROM c ORDER BY c._ts DESC
+
+SELECT TOP 1 c.recordedAt, c.IoTHub.EnqueuedTime FROM c ORDER BY c._ts DESC
 
 SELECT TOP 1 * FROM c WHERE c.deviceId=<deviceId> ORDER BY c._ts DESC
 

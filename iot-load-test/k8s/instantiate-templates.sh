@@ -35,7 +35,7 @@ cosmosDb=$(az cosmosdb list -g $rg --query "[0].name" -o tsv)
 echo
 echo "Retrieving Cosmos DB connection string"
 
-cosmosConnectionString=$(az cosmosdb list-connection-strings \
+cosmosConnectionString=$(az cosmosdb keys list --type connection-strings \
     -g $rg -n $cosmosDb \
     --query "connectionStrings[0].connectionString" \
     -o tsv)
