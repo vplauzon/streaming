@@ -99,7 +99,8 @@ namespace MultiPerfClient.Hub
                 {
                     Pooling = true,
                     MaxPoolSize = 20
-                }
+                },
+                IdleTimeout = TimeSpan.FromMinutes(60)
             };
             var settings = new ITransportSettings[] { setting };
             var gateways = from g in gatewayIds
