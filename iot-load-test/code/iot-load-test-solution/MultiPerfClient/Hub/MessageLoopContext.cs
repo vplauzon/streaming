@@ -141,7 +141,7 @@ namespace MultiPerfClient.Hub
                 deviceId = deviceName,
                 filling = new string(payload.ToArray()),
                 recordedAt = currentTimeString,
-                recordedAtTimestamp = currentTimeTs
+                recordedAtTs = currentTimeTs
             };
             var binary = JsonSerializer.SerializeToUtf8Bytes(message);
 
