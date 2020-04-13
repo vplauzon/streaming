@@ -17,7 +17,8 @@ echo "Retrieving IoT Hub connection string"
 iotConnectionString=$(az iot hub show-connection-string \
     -g $rg \
     --query "[0].connectionString[0]" \
-    -o tsv)
+    -o tsv) &
+iotConnectionStringPid=$!
 
 echo
 echo "Retrieving App Insights instrumentation key"
@@ -25,7 +26,8 @@ echo "Retrieving App Insights instrumentation key"
 appInsightsKey=$(az monitor app-insights component show \
     -g $rg \
     --query "[0].instrumentationKey" \
-    -o tsv)
+    -o tsv) &
+appInsightsKeyPid=$!
 
 echo
 echo "Retrieving Cosmos DB name"
@@ -39,6 +41,11 @@ cosmosConnectionString=$(az cosmosdb keys list --type connection-strings \
     -g $rg -n $cosmosDb \
     --query "connectionStrings[0].connectionString" \
     -o tsv)
+
+echo
+echo "Waiting for iot connection string & App Insight Key"
+wait $iotConnectionStringPid
+wait $appInsightsKeyPid
 
 echo
 echo "Instantiating hub-feeder.yaml"
