@@ -24,26 +24,33 @@ https://docs.microsoft.com/en-us/azure/iot-hub/iot-hub-scaling
 
 ## Load test
 
-### Hub Feeder performance
+### Hub Feeder
 
 \# Feeder Nodes|Message filler size|\# Gateways|\# Devices|Concurrency|# events / min|IoT Scale
 -|-|-|-|-|-|-
 1|3 kb|1|1|1|5 400|1 x B3
 1|3 kb|1 000|1|1|4 500|1 x B3
-1|3 kb|200|15|1|4 500|3 x B3
-1|3 kb|1 000|15|2|9 000|3 x B3
-1|3 kb|1 000|15|4|15 500|3 x B3
-1|3 kb|30 000|15|4|15 500|3 x B3
+1|3 kb|200|15|1|4 500|1 x B3
+1|3 kb|1 000|15|2|9 000|1 x B3
+1|3 kb|1 000|15|4|15 500|1 x B3
+1|3 kb|30 000|15|?|~450 000|2 x B3
 
 Ratio 100:1 for devices vs threads yield very unstable throughput
 
-### Cosmos DB performance
+### Cosmos DB
 
 ASA Unit|Cosmos RU|\# Gateways|\# Devices|#events / min|Latency
 -|-|-|-|-|-
 1|4 000|1 000|1|4 500|<1s
 3|4 000|200|15|4 500|<1s
 6|5 000|1 000|15|15 500|<1s
+
+### Kusto
+
+Cluster|SKUs|\# Gateways|\# Devices|#events / min|Latency
+-|-|-|-|-|-
+Standard|2xD14v2|1 000|15|15 500|(0s, 40s)
+Streaming|2xD14v2|1 000|15|15 500|(0s, 40s)
 
 ## Query hub-feeder in App Insights
 

@@ -15,7 +15,7 @@ echo
 echo "Retrieving IoT Hub connection string"
 
 #   Temporary path to insert data for async calls
-tmpPath="/tmp/$(uuidgen)"
+tmpPath="/tmp/instantiate-template-$(uuidgen)"
 mkdir $tmpPath
 
 az iot hub show-connection-string \

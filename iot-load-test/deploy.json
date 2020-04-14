@@ -11,11 +11,14 @@
     "Hub Name": "[concat('iot-hub-', variables('Unique ID'))]",
     "Hub Writer": "iothubowner",
     "Hub Reader": "hubReader",
+    "Kusto Consumer Group": "kusto",
+    "Asa Consumer Group": "stream-analytics",
     "Streaming Job Name": "[concat('streaming-', variables('Unique ID'))]",
     "Cosmos Account Name": "[concat('cosmos-', variables('Unique ID'))]",
     "Cosmos Db Name": "operationDb",
     "Cosmos Telemetry Container": "telemetry",
-    "Kusto Cluster Name": "[concat('kusto', variables('Unique ID'))]",
+    "Cosmos Registry Container": "registry",
+    "Kusto Standard Cluster Name": "[concat('kusto', variables('Unique ID'))]",
     "Kusto Db Name": "telemetry"
   },
   "resources": [
@@ -120,7 +123,15 @@
       "resources": [
         {
           "type": "eventHubEndpoints/ConsumerGroups",
-          "name": "events/adx",
+          "name": "[concat('events/', variables('Asa Consumer Group'))]",
+          "apiVersion": "2019-03-22",
+          "dependsOn": [
+            "[resourceId('Microsoft.Devices/IotHubs', variables('Hub Name'))]"
+          ]
+        },
+        {
+          "type": "eventHubEndpoints/ConsumerGroups",
+          "name": "[concat('events/', variables('Kusto Consumer Group'))]",
           "apiVersion": "2019-03-22",
           "dependsOn": [
             "[resourceId('Microsoft.Devices/IotHubs', variables('Hub Name'))]"
@@ -283,6 +294,51 @@
                   }
                 }
               ]
+            },
+            {
+              "name": "[variables('Cosmos Registry Container')]",
+              "type": "containers",
+              "apiVersion": "2019-12-12",
+              "dependsOn": [
+                "[resourceId('Microsoft.DocumentDB/databaseAccounts/sqlDatabases', variables('Cosmos Account Name'), variables('Cosmos Db Name'))]"
+              ],
+              "properties": {
+                "resource": {
+                  "id": "[variables('Cosmos Registry Container')]",
+                  "partitionKey": {
+                    "paths": [
+                      "/part"
+                    ],
+                    "kind": "Hash"
+                  },
+                  "indexingPolicy": {
+                    "indexingMode": "consistent",
+                    "includedPaths": [
+                      {
+                        "path": "/*"
+                      }
+                    ],
+                    "excludedPaths": [
+                    ]
+                  },
+                  "defaultTtl": 4000
+                }
+              },
+              "resources": [
+                {
+                  "type": "throughputSettings",
+                  "apiVersion": "2020-03-01",
+                  "name": "default",
+                  "dependsOn": [
+                    "[resourceId('Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers', variables('Cosmos Account Name'), variables('Cosmos Db Name'), variables('Cosmos Registry Container'))]"
+                  ],
+                  "properties": {
+                    "resource": {
+                      "throughput": 400
+                    }
+                  }
+                }
+              ]
             }
           ]
         },
@@ -369,7 +425,7 @@
                   "sharedAccessPolicyName": "[variables('Hub Reader')]",
                   "sharedAccessPolicyKey": "[listKeys(resourceId('Microsoft.Devices/IotHubs', variables('Hub Name')), '2019-11-04').value[1].primaryKey]",
                   "endpoint": "messages/events",
-                  "consumerGroupName": "$Default"
+                  "consumerGroupName": "[variables('Asa Consumer Group')]"
                 }
               },
               "serialization": {
@@ -444,7 +500,7 @@
     {
       "type": "Microsoft.Kusto/clusters",
       "apiVersion": "2019-05-15",
-      "name": "[variables('Kusto Cluster Name')]",
+      "name": "[variables('Kusto Standard Cluster Name')]",
       "location": "[resourceGroup().location]",
       "sku": {
         "name": "Standard_D14_v2",
@@ -461,20 +517,49 @@
           "name": "[variables('Kusto Db Name')]",
           "location": "[resourceGroup().location]",
           "dependsOn": [
-            "[resourceId('Microsoft.Kusto/clusters', variables('Kusto Cluster Name'))]"
+            "[resourceId('Microsoft.Kusto/clusters', variables('Kusto Standard Cluster Name'))]"
           ],
           "properties": {
           },
           "resources": [
+            {
+              "type": "DataConnections",
+              "apiVersion": "2019-11-09",
+              "name": "iot-hub",
+              "location": "East US",
+              "dependsOn": [
+                "[resourceId('Microsoft.Kusto/Clusters/Databases', variables('Kusto Standard Cluster Name'), variables('Kusto Db Name'))]",
+                "[resourceId('Microsoft.Devices/IotHubs', variables('Hub Name'))]"
+              ],
+              "kind": "IotHub",
+              "properties": {
+                "iotHubResourceId": "[resourceId('Microsoft.Devices/IotHubs', variables('Hub Name'))]",
+                "consumerGroup": "[variables('Kusto Consumer Group')]",
+                "tableName": "landing",
+                "mappingRuleName": "landingMapping",
+                "dataFormat": "JSON",
+                "eventSystemProperties": [
+                  "message-id",
+                  "sequence-number",
+                  "to",
+                  "absolute-expiry-time",
+                  "iothub-enqueuedtime",
+                  "correlation-id",
+                  "user-id",
+                  "iothub-ack",
+                  "iothub-connection-device-id",
+                  "iothub-connection-auth-generation-id",
+                  "iothub-connection-auth-method",
+                  "iothub-creation-time-utc"
+                ],
+                "sharedAccessPolicyName": "[variables('Hub Reader')]"
+              }
+            }
           ]
         }
       ]
     }
   ],
   "outputs": {
-    "q": {
-      "type": "object",
-      "value": "[listKeys(resourceId('Microsoft.DocumentDB/databaseAccounts', variables('Cosmos Account Name')), '2019-12-12')]"
-    }
   }
 }
