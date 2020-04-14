@@ -29,16 +29,21 @@ https://docs.microsoft.com/en-us/azure/iot-hub/iot-hub-scaling
 \# Feeder Nodes|Message filler size|\# Gateways|\# Devices|Concurrency|# events / min|IoT Scale
 -|-|-|-|-|-|-
 1|3 kb|1|1|1|5 400|1 x B3
-1|3 kb|1000|1|1|4 500|1 x B3
-1|3 kb|1000|15|1|?|3 x B3
+1|3 kb|1 000|1|1|4 500|1 x B3
+1|3 kb|200|15|1|4 500|3 x B3
+1|3 kb|1 000|15|2|9 000|3 x B3
+1|3 kb|1 000|15|4|15 500|3 x B3
+1|3 kb|30 000|15|4|15 500|3 x B3
 
 Ratio 100:1 for devices vs threads yield very unstable throughput
 
 ### Cosmos DB performance
 
-ASA Unit|Cosmos RU|\# Gateways|\# Devices|#events / s|Latency
+ASA Unit|Cosmos RU|\# Gateways|\# Devices|#events / min|Latency
 -|-|-|-|-|-
-1|4000|1|1|90|0.2s
+1|4 000|1 000|1|4 500|<1s
+3|4 000|200|15|4 500|<1s
+6|5 000|1 000|15|15 500|<1s
 
 ## Query hub-feeder in App Insights
 
@@ -50,6 +55,7 @@ customMetrics
 | summarize throughputPerSec=sum(valueSum) by bin(timestamp, 1m)
 | render timechart
 
+//  Exception happening in code
 exceptions
 | where cloud_RoleName == "HUB-FEEDER"
 | sort by timestamp desc
@@ -60,24 +66,11 @@ exceptions
 
 https://docs.microsoft.com/en-us/azure/stream-analytics/stream-analytics-monitoring#metrics-available-for-stream-analytics
 
-//  All metrics
+//  ASA Resource utilisation (%)
 AzureMetrics
 | where ResourceProvider == "MICROSOFT.STREAMANALYTICS"
-| distinct MetricName
-| order by MetricName asc
-
-//  Both input and output events:  count per second
-AzureMetrics
-| where ResourceProvider == "MICROSOFT.STREAMANALYTICS"
-| where MetricName == "InputEvents" or MetricName == "OutputEvents" 
-| summarize Count=sum(Total)/60 by MetricName, bin(TimeGenerated, 1m)
-| render timechart 
-
-//  Both input and output events:  bytes per second
-AzureMetrics
-| where ResourceProvider == "MICROSOFT.STREAMANALYTICS"
-| where MetricName == "InputEventBytes" or MetricName == "OutputEventBytes" 
-| summarize Count=sum(Total)/60 by MetricName, bin(TimeGenerated, 1m)
+| where MetricName == "ResourceUtilization"
+| summarize sum(Count*Average) by bin(TimeGenerated, 1m)
 | render timechart 
 
 //  Backlog
@@ -110,12 +103,7 @@ GROUP BY c.deviceId
 
 //  See https://docs.microsoft.com/en-us/azure/cosmos-db/cosmosdb-monitor-resource-logs#diagnostic-queries
 
-//  All categories
-AzureDiagnostics 
-| where ResourceProvider=="MICROSOFT.DOCUMENTDB" 
-| distinct Category
-
-//  Cost of writes, total
+//  RUs/s
 AzureDiagnostics 
 | where ResourceProvider=="MICROSOFT.DOCUMENTDB" 
 | where Category=="DataPlaneRequests" 

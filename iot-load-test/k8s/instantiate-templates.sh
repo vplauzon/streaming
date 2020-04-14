@@ -14,20 +14,24 @@ echo "Resource group:  $rg"
 echo
 echo "Retrieving IoT Hub connection string"
 
-iotConnectionString=$(az iot hub show-connection-string \
+#   Temporary path to insert data for async calls
+tmpPath="/tmp/$(uuidgen)"
+mkdir $tmpPath
+
+az iot hub show-connection-string \
     -g $rg \
     --query "[0].connectionString[0]" \
-    -o tsv) &
-iotConnectionStringPid=$!
+    -o tsv > "$tmpPath/iotConnectionString" &
+iotPid=$!
 
 echo
 echo "Retrieving App Insights instrumentation key"
 
-appInsightsKey=$(az monitor app-insights component show \
+az monitor app-insights component show \
     -g $rg \
     --query "[0].instrumentationKey" \
-    -o tsv) &
-appInsightsKeyPid=$!
+    -o tsv > "$tmpPath/appInsightsKey" &
+aiPid=$!
 
 echo
 echo "Retrieving Cosmos DB name"
@@ -43,9 +47,12 @@ cosmosConnectionString=$(az cosmosdb keys list --type connection-strings \
     -o tsv)
 
 echo
-echo "Waiting for iot connection string & App Insight Key"
-wait $iotConnectionStringPid
-wait $appInsightsKeyPid
+echo "Joining..."
+
+wait $iotPid
+iotConnectionString=$(cat $tmpPath/iotConnectionString)
+wait $aiPid
+appInsightsKey=$(cat $tmpPath/appInsightsKey)
 
 echo
 echo "Instantiating hub-feeder.yaml"
