@@ -395,7 +395,7 @@
     },
     {
       "type": "Microsoft.StreamAnalytics/StreamingJobs",
-      "apiVersion": "2016-03-01",
+      "apiVersion": "2017-04-01-preview",
       "name": "[variables('Streaming Job Name')]",
       "location": "[resourceGroup().location]",
       "dependsOn": [
@@ -411,11 +411,12 @@
         "eventsOutOfOrderPolicy": "adjust",
         "eventsOutOfOrderMaxDelayInSeconds": 0,
         "eventsLateArrivalMaxDelayInSeconds": 5,
-        "compatibilityLevel": "1.1",
+        "compatibilityLevel": "1.2",
         "dataLocale": "en-US",
         "inputs": [
           {
             "name": "hub",
+            "type": "Microsoft.StreamAnalytics/streamingjobs/inputs",
             "properties": {
               "type": "Stream",
               "datasource": {
@@ -440,6 +441,7 @@
         "outputs": [
           {
             "name": "cosmos",
+            "type": "Microsoft.StreamAnalytics/streamingjobs/outputs",
             "properties": {
               "datasource": {
                 "type": "Microsoft.Storage/DocumentDB",
