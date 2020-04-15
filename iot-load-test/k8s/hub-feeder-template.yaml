@@ -21,6 +21,8 @@ spec:
           value: "hub-feeder"
         - name: APP_INSIGHTS_KEY
           value: "{app-insights-key}"
+        - name: COSMOS_CONNECTION_STRING
+          value: "{cosmos-connection-string}"
         - name: IOT_CONN_STRING
           value: "{iot-connection-string}"
         - name: REGISTRATIONS_PER_SECOND

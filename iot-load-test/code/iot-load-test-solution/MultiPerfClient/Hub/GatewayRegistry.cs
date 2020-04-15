@@ -28,7 +28,7 @@ namespace MultiPerfClient.Hub
         public async Task<Gateway[]> RegisterDevicesAsync(CancellationToken cancellationToken)
         {
             var registryManager = RegistryManager.CreateFromConnectionString(
-                _configuration.ConnectionString);
+                _configuration.IotConnectionString);
             var uniqueCode = Guid.NewGuid().GetHashCode().ToString("x8");
             var gatewayIds =
                 (from g in Enumerable.Range(0, _configuration.GatewayCount)
@@ -63,7 +63,7 @@ namespace MultiPerfClient.Hub
             var gateways = from g in gatewayIds
                            let devices = from d in g.DeviceIds
                                          let client = DeviceClient.CreateFromConnectionString(
-                                             _configuration.ConnectionString,
+                                             _configuration.IotConnectionString,
                                              d,
                                              settings)
                                          select new DeviceProxy(d, client)

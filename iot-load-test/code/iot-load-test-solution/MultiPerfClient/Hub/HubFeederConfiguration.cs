@@ -7,7 +7,8 @@ namespace MultiPerfClient.Hub
     {
         public HubFeederConfiguration()
         {
-            var connectionString = Environment.GetEnvironmentVariable("IOT_CONN_STRING");
+            var cosmosConnectionString = Environment.GetEnvironmentVariable("COSMOS_CONN_STRING");
+            var iotConnectionString = Environment.GetEnvironmentVariable("IOT_CONN_STRING");
             var gatewayCountText = Environment.GetEnvironmentVariable("GATEWAY_COUNT");
             int gatewayCount;
             var devicePerGatewayText = Environment.GetEnvironmentVariable("DEVICE_PER_GATEWAY");
@@ -19,7 +20,11 @@ namespace MultiPerfClient.Hub
             var messageSizeText = Environment.GetEnvironmentVariable("MESSAGE_SIZE_IN_BYTE");
             int messageSize;
 
-            if (string.IsNullOrWhiteSpace(connectionString))
+            if (string.IsNullOrWhiteSpace(cosmosConnectionString))
+            {
+                throw new ArgumentNullException("Environment variable missing", "COSMOS_CONN_STRING");
+            }
+            else if (string.IsNullOrWhiteSpace(iotConnectionString))
             {
                 throw new ArgumentNullException("Environment variable missing", "IOT_CONN_STRING");
             }
@@ -63,7 +68,8 @@ namespace MultiPerfClient.Hub
             {
                 throw new ArgumentException("Env Var isn't an integer", "MESSAGE_SIZE_IN_BYTE");
             }
-            ConnectionString = connectionString;
+            IotConnectionString = iotConnectionString;
+            CosmosConnectionString = cosmosConnectionString;
             GatewayCount = gatewayCount;
             DevicePerGateway = devicePerGateway;
             RegistrationsPerSecond = registrationsPerSecond;
@@ -71,7 +77,9 @@ namespace MultiPerfClient.Hub
             MessageSize = messageSize;
         }
 
-        public string ConnectionString { get; }
+        public string CosmosConnectionString { get; }
+        
+        public string IotConnectionString { get; }
 
         public int GatewayCount { get; }
 

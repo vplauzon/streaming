@@ -60,16 +60,17 @@ echo "Instantiating hub-feeder.yaml"
 #   Escape connection string that might contain '/' in it:
 escapedIotConnectionString=$(echo $iotConnectionString|sed -e 's/[\/&]/\\&/g')
 
+#   Escape connection string that might contain '/' in it:
+escapedCosmosConnectionString=$(echo $cosmosConnectionString|sed -e 's/[\/&]/\\&/g')
+
 #   Find and replace tokens
 sed "s/{app-insights-key}/$appInsightsKey/g" hub-feeder-template.yaml \
     | sed "s/{iot-connection-string}/$escapedIotConnectionString/g" \
+    | sed "s/{cosmos-connection-string}/$escapedCosmosConnectionString/g" \
     > hub-feeder.yaml
 
 echo
 echo "Instantiating cosmos-ping.yaml"
-
-#   Escape connection string that might contain '/' in it:
-escapedCosmosConnectionString=$(echo $cosmosConnectionString|sed -e 's/[\/&]/\\&/g')
 
 #   Find and replace tokens
 sed "s/{app-insights-key}/$appInsightsKey/g" cosmos-ping-template.yaml \
