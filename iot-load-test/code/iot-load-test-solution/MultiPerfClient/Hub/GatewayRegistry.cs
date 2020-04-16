@@ -1,9 +1,12 @@
-﻿using Microsoft.ApplicationInsights;
+﻿using Azure.Cosmos;
+using Microsoft.ApplicationInsights;
 using Microsoft.Azure.Devices;
 using Microsoft.Azure.Devices.Client;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -11,28 +14,71 @@ namespace MultiPerfClient.Hub
 {
     internal class GatewayRegistry
     {
+        #region Inner Types
+        private class Leaser
+        {
+            [JsonPropertyName("id")]
+            public string? Id { get; set; }
+
+            [JsonPropertyName("type")]
+            public string Type { get; set; } = "leaser";
+
+            [JsonPropertyName("ttl")]
+            public int Ttl { get; set; } = 60;
+        }
+        #endregion
+
         private readonly HubFeederConfiguration _configuration;
         private readonly TelemetryClient _telemetryClient;
         private readonly TimeSpan _messageTimeout;
+        private readonly CancellationToken _cancellationToken;
+        private readonly CosmosContainer _deviceContainer;
+        private readonly string _leaserName = Guid.NewGuid().GetHashCode().ToString("x8");
+        private Task? _heartBeatTask = null;
 
         public GatewayRegistry(
             HubFeederConfiguration configuration,
             TelemetryClient telemetryClient,
-            TimeSpan messageTimeout)
+            TimeSpan messageTimeout,
+            CancellationToken cancellationToken)
         {
             _configuration = configuration;
             _telemetryClient = telemetryClient;
             _messageTimeout = messageTimeout;
+            _cancellationToken = cancellationToken;
+
+            var cosmosClient = new CosmosClient(_configuration.CosmosConnectionString);
+
+            _deviceContainer = cosmosClient.GetContainer("operationDb", "device");
         }
 
-        public async Task<Gateway[]> RegisterDevicesAsync(CancellationToken cancellationToken)
+        public async Task StartHeartBeatAsync()
+        {
+            if (_heartBeatTask != null)
+            {
+                throw new InvalidOperationException("Heart beat already started");
+            }
+            await UpsertHeartBeatAsync();
+            _heartBeatTask = PeriodicHeartBeatAsync();
+        }
+
+        public async Task StopHeartBeatAsync()
+        {
+            if (_heartBeatTask == null)
+            {
+                throw new InvalidOperationException("Heart beat hasn't started");
+            }
+            await _heartBeatTask;
+            _heartBeatTask = null;
+        }
+
+        public async Task<Gateway[]> RegisterDevicesAsync()
         {
             var registryManager = RegistryManager.CreateFromConnectionString(
                 _configuration.IotConnectionString);
-            var uniqueCode = Guid.NewGuid().GetHashCode().ToString("x8");
             var gatewayIds =
                 (from g in Enumerable.Range(0, _configuration.GatewayCount)
-                 let gatewayName = $"{uniqueCode}.{g}"
+                 let gatewayName = $"{_leaserName}.{g}"
                  select new
                  {
                      GatewayName = gatewayName,
@@ -44,12 +90,12 @@ namespace MultiPerfClient.Hub
             //  Avoid throttling on registration
             var segments = TaskRunner.Segment(ids, _configuration.RegistrationsPerSecond);
             var tasks = from s in segments
-                        select RegisterBatchDeviceAsync(registryManager, s, cancellationToken);
+                        select RegisterBatchDeviceAsync(registryManager, s, _cancellationToken);
 
             await TaskRunner.TempoRunAsync(
                 tasks,
                 _messageTimeout,
-                cancellationToken);
+                _cancellationToken);
 
             var setting = new AmqpTransportSettings(Microsoft.Azure.Devices.Client.TransportType.Amqp_Tcp_Only)
             {
@@ -112,6 +158,24 @@ namespace MultiPerfClient.Hub
 
                 throw;
             }
+        }
+
+        private async Task PeriodicHeartBeatAsync()
+        {
+            var period = TimeSpan.FromSeconds(30);
+
+            while (!_cancellationToken.IsCancellationRequested)
+            {
+                await Task.Delay(period, _cancellationToken);
+                await UpsertHeartBeatAsync();
+            }
+        }
+
+        private async Task UpsertHeartBeatAsync()
+        {
+            var leaser = new Leaser { Id = _leaserName };
+
+            await _deviceContainer.UpsertItemAsync(leaser);
         }
     }
 }

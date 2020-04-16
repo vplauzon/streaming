@@ -31,17 +31,20 @@ namespace MultiPerfClient.Hub
 
         async Task IDaemon.RunAsync()
         {
+            var registry = new GatewayRegistry(
+                _configuration,
+                _telemetryClient,
+                MESSAGE_TIMEOUT,
+                _cancellationTokenSource.Token);
+
             Console.WriteLine("Hub Feeder");
             Console.WriteLine($"Register {_configuration.TotalDeviceCount} devices...");
 
             try
             {
-                var registry = new GatewayRegistry(
-                    _configuration,
-                    _telemetryClient,
-                    MESSAGE_TIMEOUT);
-                var gateways = await registry.RegisterDevicesAsync(
-                    _cancellationTokenSource.Token);
+                await registry.StartHeartBeatAsync();
+
+                var gateways = await registry.RegisterDevicesAsync();
 
                 Console.WriteLine("Looping for messages...");
                 await LoopMessagesAsync(gateways);
@@ -54,6 +57,7 @@ namespace MultiPerfClient.Hub
             finally
             {
                 _telemetryClient.Flush();
+                await registry.StopHeartBeatAsync();
             }
         }
 

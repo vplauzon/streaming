@@ -17,7 +17,7 @@
     "Cosmos Account Name": "[concat('cosmos-', variables('Unique ID'))]",
     "Cosmos Db Name": "operationDb",
     "Cosmos Telemetry Container": "telemetry",
-    "Cosmos Registry Container": "registry",
+    "Cosmos Device Container": "device",
     "Kusto Standard Cluster Name": "[concat('kusto', variables('Unique ID'))]",
     "Kusto Db Name": "telemetry"
   },
@@ -296,7 +296,7 @@
               ]
             },
             {
-              "name": "[variables('Cosmos Registry Container')]",
+              "name": "[variables('Cosmos Device Container')]",
               "type": "containers",
               "apiVersion": "2019-12-12",
               "dependsOn": [
@@ -304,7 +304,7 @@
               ],
               "properties": {
                 "resource": {
-                  "id": "[variables('Cosmos Registry Container')]",
+                  "id": "[variables('Cosmos Device Container')]",
                   "partitionKey": {
                     "paths": [
                       "/part"
@@ -321,7 +321,7 @@
                     "excludedPaths": [
                     ]
                   },
-                  "defaultTtl": 4000
+                  "defaultTtl": -1
                 }
               },
               "resources": [
@@ -330,7 +330,7 @@
                   "apiVersion": "2020-03-01",
                   "name": "default",
                   "dependsOn": [
-                    "[resourceId('Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers', variables('Cosmos Account Name'), variables('Cosmos Db Name'), variables('Cosmos Registry Container'))]"
+                    "[resourceId('Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers', variables('Cosmos Account Name'), variables('Cosmos Db Name'), variables('Cosmos Device Container'))]"
                   ],
                   "properties": {
                     "resource": {

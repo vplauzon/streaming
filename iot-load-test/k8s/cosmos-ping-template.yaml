@@ -21,7 +21,7 @@ spec:
           value: "cosmos-ping"
         - name: APP_INSIGHTS_KEY
           value: "{app-insights-key}"
-        - name: COSMOS_CONNECTION_STRING
+        - name: COSMOS_CONN_STRING
           value: "{cosmos-connection-string}"
         - name: CONCURRENT_CALL_COUNT
           value: "1"
