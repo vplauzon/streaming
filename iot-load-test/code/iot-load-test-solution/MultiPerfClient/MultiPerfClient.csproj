@@ -20,7 +20,7 @@
 
   <ItemGroup>
     <PackageReference Include="AppInsights.TelemetryInitializers" Version="1.1.908" />
-    <PackageReference Include="Azure.Cosmos" Version="4.0.0-preview3" />
+    <PackageReference Include="Microsoft.Azure.Cosmos" Version="3.8.0" />
     <PackageReference Include="Microsoft.Azure.Devices" Version="1.20.1" />
     <PackageReference Include="Microsoft.Azure.Devices.Client" Version="1.25.0" />
     <PackageReference Include="Microsoft.Azure.Devices.Provisioning.Client" Version="1.5.2" />

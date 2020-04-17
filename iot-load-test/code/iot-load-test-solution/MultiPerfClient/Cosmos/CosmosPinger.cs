@@ -1,5 +1,5 @@
-﻿using Azure.Cosmos;
-using Microsoft.ApplicationInsights;
+﻿using Microsoft.ApplicationInsights;
+using Microsoft.Azure.Cosmos;
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
@@ -15,7 +15,7 @@ namespace MultiPerfClient.Cosmos
         private readonly CancellationTokenSource _cancellationTokenSource = new CancellationTokenSource();
         private readonly CosmosPingerConfiguration _configuration = new CosmosPingerConfiguration();
         private readonly TelemetryClient _telemetryClient;
-        private readonly CosmosContainer _container;
+        private readonly Container _container;
         private IImmutableList<string> _gatewayIds = ImmutableArray<string>.Empty;
 
         public CosmosPinger(TelemetryClient telemetryClient)
