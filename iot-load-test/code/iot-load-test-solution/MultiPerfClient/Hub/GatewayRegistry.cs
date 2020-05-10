@@ -138,6 +138,8 @@ namespace MultiPerfClient.Hub
                     _configuration.TotalDeviceCount - ids.Count);
                 var registeredDevices = await registerTask;
 
+                Console.WriteLine($"Found {recoveredDevices.Count} devices, "
+                    + $"registered {registeredDevices.Length}");
                 await WriteDevicesAsync(registeredDevices);
                 ids.AddRange(registeredDevices);
                 ids.AddRange(recoveredDevices);
