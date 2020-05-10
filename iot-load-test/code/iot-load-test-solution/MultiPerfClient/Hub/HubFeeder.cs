@@ -37,8 +37,6 @@ namespace MultiPerfClient.Hub
 
             try
             {
-                await registry.StartHeartBeatAsync();
-
                 var gateways = await registry.RegisterDevicesAsync();
 
                 Console.WriteLine("Looping for messages...");
@@ -52,7 +50,6 @@ namespace MultiPerfClient.Hub
             finally
             {
                 _telemetryClient.Flush();
-                await registry.StopHeartBeatAsync();
             }
         }
 
