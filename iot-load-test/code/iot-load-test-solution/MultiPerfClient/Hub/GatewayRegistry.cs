@@ -185,7 +185,11 @@ namespace MultiPerfClient.Hub
                 $"SELECT TOP {deviceCount} * FROM c "
                 + $"WHERE c.type='device' AND c.leaser NOT IN ({leaserList})";
             var devices = await _deviceContainer.GetItemQueryIterator<DeviceDocument>(
-                deviceQuery).ToListAsync();
+                deviceQuery,
+                requestOptions: new QueryRequestOptions()
+                {
+                    MaxItemCount = 50000
+                }).ToListAsync();
             //  Enlist current leaser as the devices leaser
             var leasingDeviceTasks = from d in devices
                                      let doc = new DeviceDocument
